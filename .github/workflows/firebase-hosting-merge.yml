@@ -11,17 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # - run: npm ci && npm run build
-      - name: Build
-        run: |
-          cd client
-          npm i
-          npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FIRECHESS0 }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHESSOK_FIRECHESS }}'
           channelId: live
-          projectId: firechess0
-        env:
-          FIREBASE_CLI_PREVIEWS: hostingchannels
+          projectId: chessok-firechess

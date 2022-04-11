@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build": "parcel build public/index.html",
     "dev": "parcel serve public/index.html"
   },
   "devDependencies": {

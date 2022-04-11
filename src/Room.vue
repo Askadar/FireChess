@@ -48,24 +48,22 @@ export default defineComponent({
 				gameStatus: 'progress',
 			})
 		},
-		joinRoom() {
+		joinRoom(roomId: string) {
 			const { uid, username } = this
 
-			if (this.searchQuery == '') return
-
-			const docRef = db.collection('rooms').doc(this.searchQuery)
-			this.searchQuery = ''
+			const docRef = db.collection('rooms').doc(roomId)
 
 			docRef
 				.get()
 				.then((doc) => {
 					if (doc.exists) {
 						console.log('Players in the room:', doc.data().players.length)
-						if (uid !== doc.data().white.uid && doc.data().players.length <= 1) {
-							docRef.update({
-								black: { uid: uid, name: username },
-								players: arrayUnion(uid),
-							})
+						if (doc.data().players.length <= 1) {
+							if (uid !== doc.data().owner)
+								docRef.update({
+									black: { uid: uid, name: username },
+									players: arrayUnion(uid),
+								})
 							this.selectRoom(doc.id)
 						}
 						else alert('Cannot join this room')
@@ -123,7 +121,7 @@ export default defineComponent({
 				</div>
 				<div class="list-group list-group-flush">
 					<button v-for="room in rooms" type="button" class="list-group-item list-group-item-action"
-						@click="() => selectRoom(room.id)">
+						@click="() => joinRoom(room.id)">
 						{{ generateRoomLabel(room) }}
 
 						<button v-if="room.owner == uid" type="button" class="btn btn-danger btn-sm float-end"
@@ -146,7 +144,7 @@ export default defineComponent({
 						<input type="search" class="form-control" id="inputText" placeholder="Room ID" v-model="searchQuery" />
 					</div>
 					<div class="col-auto">
-						<button type="button" class="btn btn-outline-primary mb-3" :disabled="searchQuery === ''" @click="joinRoom">
+						<button type="button" class="btn btn-outline-primary mb-3" :disabled="searchQuery === ''" @click="() => joinRoom(searchQuery)">
 							Join Room
 						</button>
 					</div>

@@ -104,12 +104,5 @@ dist
 
 # TernJS port file
 .tern-port
-.parcel-cache/7afa1c76f2db083a
-.parcel-cache/9c4db7f2c4a2647c
-.parcel-cache/080e9f99bc50410b.txt
-.parcel-cache/91f3213d6d8c4ba9
-.parcel-cache/7105a4c14c7e9c10
-.parcel-cache/data.mdb
-.parcel-cache/e9ff402c196e45ef
-.parcel-cache/f018c06c2ef91a73
-.parcel-cache/lock.mdb
+
+.parcel-cache/

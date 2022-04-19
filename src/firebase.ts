@@ -27,3 +27,4 @@ export const deleteField = firebase.firestore.FieldValue.delete
 export const arrayRemove = firebase.firestore.FieldValue.arrayRemove
 
 export const fieldValues = firebase.firestore.FieldValue
+export const Timestamp = firebase.firestore.Timestamp

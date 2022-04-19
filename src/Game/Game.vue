@@ -2,8 +2,8 @@
 import { defineComponent, } from "vue";
 import { docData } from "rxfire/firestore";
 import { Chess } from 'chess.js'
-import { db } from './firebase';
-import { ClipboardJS, jQuery, Chessboard } from './externals'
+import { db } from '../firebase';
+import { ClipboardJS, jQuery, Chessboard } from '../externals'
 import { untilUnmounted } from "vuse-rx/src";
 
 export default defineComponent({

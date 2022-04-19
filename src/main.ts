@@ -1,4 +1,11 @@
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { createApp } from 'vue'
-import App from './App.vue'
 
-createApp(App).mount('#chess')
+import { Main } from './Main'
+import { routes } from './router'
+
+const router = createRouter({
+	history: createWebHashHistory(),
+	routes,
+})
+createApp(Main).use(router).mount('#chess')

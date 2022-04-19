@@ -1,10 +1,10 @@
 {
-  "name": "svelte-app",
+  "name": "chessok-firechess",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "parcel build public/index.html",
-    "dev": "parcel serve public/index.html"
+    "dev": "parcel public/index.html"
   },
   "devDependencies": {
     "@parcel/transformer-vue": "2.4.1",
@@ -22,6 +22,7 @@
     "rxfire": "^4.0.0",
     "rxjs": "^6.6.7",
     "vue": "^3.2.31",
+    "vue-router": "4",
     "vuse-rx": "^0.13.1"
   }
 }

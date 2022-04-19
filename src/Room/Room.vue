@@ -1,37 +1,62 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { useRouter} from 'vue-router'
 
 import { collectionData } from 'rxfire/firestore'
 import { startWith } from 'rxjs/operators'
 import { refFrom } from 'vuse-rx'
 
-import { db, arrayUnion, deleteField, arrayRemove, fieldValues } from './firebase'
-import Game from './Game.vue';
 
-// User ID passed from parent
+import { db, arrayUnion, deleteField, arrayRemove, fieldValues, Timestamp } from '../firebase'
+
+type PlayerSchema = { uid: string; name: string }
+
+type RoomSchema = {
+	owner: string
+	players: string[]
+	white: PlayerSchema,
+	black?: PlayerSchema,
+	gameBoard: string
+	gameStatus: 'waiting' | 'in progress' | 'finished'
+	created: typeof Timestamp
+	id: string
+}
+
 export default defineComponent({
-	components: { Game },
 	props: { uid: String, username: String },
 	setup(props) {
 		const { uid } = props
 		const query = db
 			.collection('rooms')
-			// .where('owner', '==', uid)
-			// .orderBy('created', 'desc')
-		const rooms = refFrom(collectionData(query, 'id').pipe(startWith([])))
+			// Cuts off stale rooms
+			.where('created', '>', Timestamp.fromDate(new Date(Date.now() - 90e3)))
+			.orderBy('created', 'asc')
+		const rooms = refFrom<RoomSchema>(collectionData(query, 'id').pipe(startWith([])))
 
-		return { query, rooms }
+
+		const generateRoomLabel = (room: RoomSchema) => {
+			switch(room.players.length){
+				case 0:
+					return `Пустая комната`
+				case 1:
+					return `Комната с гостем`
+				case 2:
+					return `Играют`
+			}
+		}
+
+		return { query, rooms, generateRoomLabel }
 	},
 	data: () => ({
 		roomID: '',
 		searchQuery: '',
 	}),
 	methods: {
-		selectRoom(id) {
-			this.roomID = id
+		selectRoom(id: string) {
+			this.$router.push(`/${id}`)
 		},
 		roomList() {
-			this.roomID = ''
+			this.$router.push(`/`)
 		},
 		createRoom() {
 			const { uid, username } = this
@@ -65,8 +90,7 @@ export default defineComponent({
 									players: arrayUnion(uid),
 								})
 							this.selectRoom(doc.id)
-						}
-						else alert('Cannot join this room')
+						} else alert('Cannot join this room')
 					} else {
 						// doc.data() will be undefined in this case
 						console.log('No such document!')
@@ -102,18 +126,12 @@ export default defineComponent({
 					console.log('Error getting document:', error)
 				})
 		},
-		generateRoomLabel(room) {
-			const { uid } = this
-			if (room.black && room.black.uid != uid) return `Room with ${room.black.name}`
-			else if (room.black && room.white.uid != uid) return `Room with ${room.white.name}`
-			else if (!room.black) return `Empty room`
-		},
 	},
 })
 </script>
 
 <template>
-	<div v-if="!roomID" class="row justify-content-around">
+	<div class="row justify-content-around">
 		<div class="col-lg-4 col-md-5 mb-3">
 			<div class="card">
 				<div class="card-header">
@@ -137,41 +155,9 @@ export default defineComponent({
 			</div>
 		</div>
 		<div class="col-auto">
-			<form>
-				<div class="row g-2">
-					<div class="col-auto">
-						<label for="inputText" class="visually-hidden">Room ID</label>
-						<input type="search" class="form-control" id="inputText" placeholder="Room ID" v-model="searchQuery" />
-					</div>
-					<div class="col-auto">
-						<button type="button" class="btn btn-outline-primary mb-3" :disabled="searchQuery === ''" @click="() => joinRoom(searchQuery)">
-							Join Room
-						</button>
-					</div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-auto">
-						<button type="button" class="btn btn-outline-success" @click="createRoom">
-							Create Room
-						</button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-12">
-			<form v-if="roomID !== ''" class="row g-3 mb-3">
-				<div class="col-12">
-					<button type="button" class="btn btn-primary" @click="roomList">Back</button>
-				</div>
-			</form>
-			<div class="list-group">
-				<template v-for="room in rooms">
-					<game v-if="roomID == room.id" :roomId="room.id" :uid="uid" />
-				</template>
-			</div>
+			<button type="button" class="btn btn-outline-success" @click="createRoom">
+				Create Room
+			</button>
 		</div>
 	</div>
 </template>

@@ -23,6 +23,7 @@
     "rxjs": "^6.6.7",
     "vue": "^3.2.31",
     "vue-router": "4",
+    "vue-toastification": "^2.0.0-rc.5",
     "vuse-rx": "^0.13.1"
   }
 }

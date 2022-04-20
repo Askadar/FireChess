@@ -10,14 +10,14 @@ import { useTypedCollection } from './useTypedCollection'
 
 export type PlayerSchema = { uid: string; name: string }
 
-interface RoomSchema {
+export interface RoomSchema {
 	readonly id: string
 	owner: string
 	players: string[]
 	white?: PlayerSchema
 	black?: PlayerSchema
 	gameBoard: string
-	gameStatus: 'waiting' | 'in progress' | 'finished'
+	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited'
 	created: firebase.firestore.Timestamp
 }
 
@@ -137,6 +137,7 @@ export const useRoomsCollection = (
 
 	return {
 		query,
+		collection,
 		rooms,
 		generateRoomLabel,
 		createRoom,

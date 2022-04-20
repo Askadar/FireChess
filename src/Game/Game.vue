@@ -1,180 +1,137 @@
 <script lang="ts">
-import { defineComponent, } from "vue";
-import { docData } from "rxfire/firestore";
-import { Chess } from 'chess.js'
-import { db } from '../firebase';
-import { ClipboardJS, jQuery, Chessboard } from '../externals'
-import { untilUnmounted } from "vuse-rx/src";
+import { defineComponent, ref } from 'vue'
+import { docData } from 'rxfire/firestore'
+import { untilUnmounted } from 'vuse-rx/src'
+import { useRoute, useRouter } from 'vue-router'
+
+import { useRoomsCollection, RoomSchema } from '../common'
+import { useBoard } from './useBoard'
+import { useChess } from './useChess'
 
 export default defineComponent({
-	props: { roomId: String, uid: String },
+	props: { uid: { type: String, required: true } },
 	data: () => ({
-		gameBoard: null, whiteName: '', turn: 'w', gameOver: false, blackName: '',
-		matchStart: false,
-		playingAs: 'w',
+		gameBoard: null,
+		whiteName: '',
+		turn: 'w',
+		gameOver: false,
+		blackName: '',
 	}),
 	setup(props) {
-		const { uid, roomId } = props
-		const clipboard = new ClipboardJS('.copy');
-		const board = null
-		const chess = new Chess()
+		const { uid } = props
+		const { params } = useRoute()
+		const roomId = params.routeId as string
+		const router = useRouter()
+
+		const playingAs = ref('w')
+		const matchStart = ref(false)
+		const gameOver = ref(false)
+		const whiteName = ref('')
+		const blackName = ref('')
+		const room = ref<RoomSchema>()
+
+		const { collection, getRoom, updateRoom } = useRoomsCollection({ uid, username: 'null' })
+
+		const { chess, resetGame, updateGame, generateGameStatus } = useChess({
+			matchStart,
+			whiteName,
+			blackName,
+		})
+		const { board, resetBoard, updateBoard } = useBoard({
+			uid,
+			chess,
+			roomId,
+			matchStart,
+			playingAs,
+		})
+
+		const restartGame = async () => {
+			if (!room.value) throw new Error(`Unexpected empty room value when restarting game`)
+
+			await updateRoom(room.value.id, {
+				gameBoard: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+			})
+			resetBoard()
+			resetGame()
+		}
+
+		getRoom(roomId)
+			.then((doc) => doc.data())
+			.then((room) => {
+				playingAs.value = room?.black?.uid === uid ? 'b' : 'w'
+				board.value.orientation(playingAs.value === 'b' ? 'black' : 'white')
+			})
+
+		const onRoomDataUpdate = (roomData: RoomSchema) => {
+			const { gameBoard } = roomData
+			if (!gameBoard) return
+			if (roomData.players.length === 2) matchStart.value = true
+
+			if (!whiteName.value || !blackName.value) {
+				whiteName.value = roomData.white?.name || ''
+				blackName.value = roomData.black?.name || ''
+			}
+
+			updateBoard(gameBoard)
+			updateGame(gameBoard)
+			gameOver.value = chess.game_over()
+			room.value = roomData
+		}
+
+		const leaveRoom = () => {
+			if (room.value)
+				if (room.value.owner === uid) {
+					const extraClause =
+						gameOver.value === false && room.value?.gameStatus !== 'waiting'
+							? ' и Вам будет засчитано поражение'
+							: ''
+					const acceptCloseRoom = confirm(
+						`Если вернуться в лобби, комната будет закрыта${extraClause}. Закрыть комнату и вернуться в лобби?`
+					)
+					if (!acceptCloseRoom) return false
+
+					updateRoom(roomId, { gameStatus: gameOver.value === true ? 'finished' : 'forfeited' })
+				} else if (room.value.players.some((p) => p === uid) && !gameOver.value) {
+					const acceptLeaveRoom = confirm(
+						`Если вернуться в лобби, Вам будет засчитано поражение. Принять поражение и вернуться в лобби?`
+					)
+					if (!acceptLeaveRoom) return false
+				}
+
+			router.push(`/`)
+		}
+
+		untilUnmounted(docData<RoomSchema>(collection.doc(roomId))).subscribe(onRoomDataUpdate)
 
 		return {
-			chess, board,
+			roomId,
+			gameOver,
+			chess,
+			board,
+			leaveRoom,
+			restartGame,
+			generateGameStatus,
 		}
 	},
-	methods: {
-		removeHighlights() {
-			jQuery('#myBoard' + this.id + ' .square-55d63').css('background', '')
-		},
-		highlightCell(cellId) {
-			const cell$ = jQuery('#myBoard' + this.id + ' .square-' + cellId)
-
-			cell$.css('background', this.hoverColour)
-		},
-		onDragStart(_, piece) {
-			const { chess, matchStart } = this
-			if (chess.game_over()) return false
-
-			if ((chess.turn() === 'w' && piece.search(/^b/) !== -1) ||
-				(chess.turn() === 'b' && piece.search(/^w/) !== -1) ||
-				(chess.turn() !== this.playingAs) ||
-				!matchStart) {
-				return false
-			}
-		},
-		onDrop(source, target) {
-			const { chess, roomId } = this
-			this.removeHighlights()
-
-			// see if the move is legal
-			var move = chess.move({
-				from: source,
-				to: target,
-				promotion: 'q' // NOTE: always promote to a queen for example simplicity
-			})
-
-			// illegal move
-			if (move === null) return 'snapback'
-			else {
-				db.doc('rooms/' + roomId).update({ gameBoard: chess.fen() });
-			}
-		},
-		onMouseoverSquare(square) {
-			const { chess } = this
-			// get list of possible moves for this square
-			const moves = chess.moves({
-				square: square,
-				verbose: true
-			})
-
-			console.log(moves)
-			// exit if there are no moves available for this square
-			if (moves.length === 0) return
-
-			// highlight the square they moused over
-			this.highlightCell(square)
-
-			// highlight the possible squares for this piece
-			for (let i = 0; i < moves.length; i++) {
-				this.highlightCell(moves[i].to)
-			}
-		},
-		onMouseoutSquare() {
-			this.removeHighlights()
-		},
-		onSnapEnd() {
-			const { board, chess } = this
-			board.position(chess.fen())
-		},
-		goBack() {
-			// TODO router
-			// dispatch('goBack', { roomId });
-		},
-		restartGame() {
-			const { chess, board, roomId } = this
-			db.doc('rooms/' + roomId).update({ gameBoard: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" })
-				.then(() => {
-					board.start()
-					chess.reset()
-				});
-		},
-		generateGameStatus() {
-			const { turn, gameOver, whiteName, blackName } = this
-
-			if (turn === 'w' && !gameOver)
-				return `${whiteName}'s turn (White)`
-			else if (turn === 'b' && !gameOver)
-				return `${blackName}'s turn (Black)`
-			else if (gameOver)
-				return `Game Over!`
-		}
-	},
-	computed: {
-		hoverColour() { return this.playingAs === 'w' ? '#a9a9a9' : '#696969' }
-	},
-	mounted() {
-		const config = {
-			draggable: true,
-			position: 'start',
-			onDragStart: this.onDragStart.bind(this),
-			onDrop: this.onDrop.bind(this),
-			onMouseoutSquare: this.onMouseoutSquare.bind(this),
-			onMouseoverSquare: this.onMouseoverSquare.bind(this),
-			onSnapEnd: this.onSnapEnd.bind(this),
-			pieceTheme: './img/chesspieces/wikipedia/{piece}.png'
-		}
-		this.board = Chessboard(`myBoard-${this.roomId}`, config)
-
-
-		const roomRef = db.doc('rooms/' + this.roomId);
-		const onRoomDataUpdate = room => {
-			const { gameBoard } = room
-			if (!gameBoard)
-				return;
-
-			this.board.position(gameBoard)
-			this.chess.load(gameBoard)
-
-			if (room.black) {
-				this.blackName = room.black.name
-
-				this.matchStart = true
-				if (room.black.uid == this.uid)
-					this.playingAs = 'b'
-			}
-
-			const turn = this.chess.turn()
-			const gameOver = this.chess.game_over()
-			const { name: whiteName, uid: whiteId } = room.white
-
-			if (this.playingAs === 'w')
-				this.board.orientation('white')
-			else
-				this.board.orientation('black')
-		}
-
-		untilUnmounted(docData(roomRef)).subscribe(onRoomDataUpdate)
-	}
 })
-
 </script>
 
 <template>
 	<div class="row">
-		<div class="col-md-6 offset-md-2  mb-3">
+		<div class="col-md-6 offset-md-2 mb-3">
 			<div :id="`myBoard-${roomId}`" style="width: 80%"></div>
 		</div>
 		<div class="col-md-3">
 			<div class="card mb-3">
-				<div class="card-header">Game Status</div>
+				<div class="card-header">
+					<button type="button" class="btn btn-outline-dark" @click="leaveRoom">
+						Вернуться в лобби
+					</button>
+				</div>
+			</div>
+			<div class="card mb-3">
+				<div class="card-header">Ход игры</div>
 				<div class="card-body">
-					<template v-if="!matchStart">
-						<p class="card-text">Waiting for Second player to join.</p>
-						<button type="button" class="btn btn-outline-dark copy" :data-clipboard-text="roomId">
-							<i class="fas fa-clipboard me-2"></i>Copy Room ID
-						</button>
-					</template>
 					<p class="card-text">{{ generateGameStatus() }}</p>
 					<button v-if="gameOver" type="button" class="btn btn-outline-dark" @click="restartGame">
 						<i class="fas fa-sync-alt me-2"></i>Reset Board

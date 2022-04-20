@@ -38,7 +38,7 @@ export default defineComponent({
     </header>
 
     <div class="container-fluid" v-if="user">
-      <router-view :uid="user.uid" :username="user.displayName || 'guest'" />
+      <router-view :uid="user.uid" :username="user.displayName || 'Гость'" />
     </div>
   </div>
 </template>

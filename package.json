@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "parcel build public/index.html",
-    "dev": "parcel public/index.html"
+    "dev": "parcel public/index.html",
+    "deploy": "rm dist -rf && yarn build && cp public/img dist/img -r && firebase deploy"
   },
   "devDependencies": {
     "@parcel/transformer-vue": "2.4.1",

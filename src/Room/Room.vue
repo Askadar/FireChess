@@ -50,6 +50,7 @@ export default defineComponent({
 						type="button"
 						class="list-group-item list-group-item-action"
 						@click="() => playInRoom(room.id)"
+						:key="room.id"
 					>
 						{{ generateRoomLabel(room) }}
 

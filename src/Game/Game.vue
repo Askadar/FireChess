@@ -1,26 +1,22 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, onUnmounted, ref } from 'vue'
 import { docData } from 'rxfire/firestore'
 import { untilUnmounted } from 'vuse-rx/src'
 import { useRoute, useRouter } from 'vue-router'
+import firebase from 'firebase'
 
 import { useRoomsCollection, RoomSchema } from '../common'
 import { useBoard } from './useBoard'
 import { useChess } from './useChess'
+import { useInterval } from '../common/useInterval'
+import { fieldValues } from '../firebase'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true } },
-	data: () => ({
-		gameBoard: null,
-		whiteName: '',
-		turn: 'w',
-		gameOver: false,
-		blackName: '',
-	}),
 	setup(props) {
 		const { uid } = props
 		const { params } = useRoute()
-		const roomId = params.routeId as string
+		const roomId = params.roomId as string
 		const router = useRouter()
 
 		const playingAs = ref('w')
@@ -29,6 +25,7 @@ export default defineComponent({
 		const whiteName = ref('')
 		const blackName = ref('')
 		const room = ref<RoomSchema>()
+		const stopRoomUpdateInterval = ref((): boolean => true)
 
 		const { collection, getRoom, updateRoom } = useRoomsCollection({ uid, username: 'null' })
 
@@ -45,6 +42,8 @@ export default defineComponent({
 			playingAs,
 		})
 
+		const refreshRoomTimer = () =>
+			updateRoom(roomId, { created: fieldValues.serverTimestamp() as firebase.firestore.Timestamp })
 		const restartGame = async () => {
 			if (!room.value) throw new Error(`Unexpected empty room value when restarting game`)
 
@@ -55,17 +54,24 @@ export default defineComponent({
 			resetGame()
 		}
 
+		onUnmounted(() => stopRoomUpdateInterval.value())
 		getRoom(roomId)
 			.then((doc) => doc.data())
 			.then((room) => {
 				playingAs.value = room?.black?.uid === uid ? 'b' : 'w'
 				board.value.orientation(playingAs.value === 'b' ? 'black' : 'white')
+
+				if (room?.owner === uid) {
+					const { stop } = useInterval(refreshRoomTimer, 60e3)
+					stopRoomUpdateInterval.value = stop
+				}
 			})
 
 		const onRoomDataUpdate = (roomData: RoomSchema) => {
 			const { gameBoard } = roomData
 			if (!gameBoard) return
 			if (roomData.players.length === 2) matchStart.value = true
+			if (matchStart.value) stopRoomUpdateInterval.value()
 
 			if (!whiteName.value || !blackName.value) {
 				whiteName.value = roomData.white?.name || ''

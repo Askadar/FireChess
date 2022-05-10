@@ -147,3 +147,26 @@ export default defineComponent({
 		</div>
 	</div>
 </template>
+
+<style lang="stylus">
+.square-55d63:after
+	content ""
+	transition: box-shadow 0.1s ease-in
+	box-shadow: inset 0 0 2px 2px rgba(255, 255, 255, 0.0)
+	display: block;
+	width: 90%;
+	height: 90%;
+	transform: translate(5%, 5%);
+	border-radius: 100%;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+
+.hover-black
+.hover-white
+	&:after
+		content ""
+		box-shadow: inset 0 0 4px 4px rgba(255, 255, 255, 0.8)
+</style>

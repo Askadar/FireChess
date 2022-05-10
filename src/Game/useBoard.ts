@@ -14,33 +14,33 @@ export const useBoard = (props: {
 
 	const { updateRoom } = useRoomsCollection({ uid, username: 'invalid param' })
 	const hoverColour = computed(() => {
-		return playingAs.value === 'w' ? '#a9a9a9' : '#696969'
+		return playingAs.value === 'w' ? 'hover-white' : 'hover-black'
 	})
 	const board = ref()
 
 	const highlightCell = (cellId: string) => {
 		document
-			.querySelectorAll<HTMLDivElement>(`#myBoard${roomId} .square-${cellId}`)
-			.forEach((el) => (el.style.background = hoverColour.value))
+			.querySelectorAll<HTMLDivElement>(`#myBoard-${roomId} .square-${cellId}`)
+			.forEach((el) => el.classList.add(hoverColour.value))
 	}
 	const removeHighlights = () => {
 		document
-			.querySelectorAll<HTMLDivElement>(`#myBoard${roomId} .square-55d63`)
-			.forEach((el) => (el.style.background = ''))
+			.querySelectorAll<HTMLDivElement>(`#myBoard-${roomId} .square-55d63`)
+			.forEach((el) => el.classList.remove('hover-white', 'hover-black'))
 	}
-	const onDragStart = (_: Event, piece: string) => {
-		if (chess.value.game_over()) return false
 
+	const canMove = (piece: string) => {
+		if (chess.value.game_over()) return false
 		const currentTurnColour = chess.value.turn()
-		if (
+
+		return !(
 			(currentTurnColour === 'w' && piece.search(/^b/) !== -1) ||
 			(currentTurnColour === 'b' && piece.search(/^w/) !== -1) ||
 			currentTurnColour !== playingAs.value ||
 			!matchStart.value
-		) {
-			return false
-		}
+		)
 	}
+	const onDragStart = (_: Event, piece: string) => canMove(piece)
 
 	const onDrop = (source: Square, target: Square) => {
 		removeHighlights()
@@ -62,11 +62,9 @@ export const useBoard = (props: {
 			verbose: true,
 		})
 
-		console.log(moves)
 		if (moves.length === 0) return
 
-		highlightCell(square)
-		moves.forEach(({ to }) => highlightCell(to))
+		if (canMove(moves[0].color + moves[0].piece)) moves.forEach(({ to }) => highlightCell(to))
 	}
 
 	const onMouseoutSquare = removeHighlights

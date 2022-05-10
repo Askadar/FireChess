@@ -6,7 +6,7 @@ import { Chessboard } from '../externals'
 export const useBoard = (props: {
 	roomId: string
 	uid: string
-	chess: ChessInstance
+	chess: Ref<ChessInstance>
 	playingAs: Ref<string>
 	matchStart: Ref<boolean>
 }) => {
@@ -29,10 +29,9 @@ export const useBoard = (props: {
 			.forEach((el) => (el.style.background = ''))
 	}
 	const onDragStart = (_: Event, piece: string) => {
-		// const { chess, matchStart } = this
-		if (chess.game_over()) return false
+		if (chess.value.game_over()) return false
 
-		const currentTurnColour = chess.turn()
+		const currentTurnColour = chess.value.turn()
 		if (
 			(currentTurnColour === 'w' && piece.search(/^b/) !== -1) ||
 			(currentTurnColour === 'b' && piece.search(/^w/) !== -1) ||
@@ -46,7 +45,7 @@ export const useBoard = (props: {
 	const onDrop = (source: Square, target: Square) => {
 		removeHighlights()
 
-		var move = chess.move({
+		var move = chess.value.move({
 			from: source,
 			to: target,
 			promotion: 'q', // TODO allow promotion selection
@@ -54,11 +53,11 @@ export const useBoard = (props: {
 
 		if (move === null) return 'snapback'
 
-		updateRoom(roomId, { gameBoard: chess.fen() })
+		updateRoom(roomId, { gameBoard: chess.value.fen() })
 	}
 
 	const onMouseoverSquare = (square: Square) => {
-		const moves = chess.moves({
+		const moves = chess.value.moves({
 			square,
 			verbose: true,
 		})
@@ -73,7 +72,7 @@ export const useBoard = (props: {
 	const onMouseoutSquare = removeHighlights
 
 	const onSnapEnd = () => {
-		board.value.position(chess.fen())
+		board.value.position(chess.value.fen())
 	}
 
 	const config = {
@@ -89,7 +88,7 @@ export const useBoard = (props: {
 	onMounted(() => (board.value = Chessboard(`myBoard-${roomId}`, config)))
 
 	const resetBoard = () => board.value.start()
-	const updateBoard = (newBoard: string) => board.value.position(newBoard)
+	const updateBoard = (newBoard: string) => board.value?.position(newBoard)
 
 	return { board, resetBoard, updateBoard }
 }

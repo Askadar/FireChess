@@ -16,6 +16,7 @@ export interface RoomSchema {
 	players: string[]
 	white?: PlayerSchema
 	black?: PlayerSchema
+	lost?: string,
 	gameBoard: string
 	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited'
 	created: firebase.firestore.Timestamp

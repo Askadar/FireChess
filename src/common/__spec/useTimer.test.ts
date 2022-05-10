@@ -37,6 +37,31 @@ describe('useTimer', () => {
 			jest.advanceTimersByTime(250)
 			expect(timer.timeLeftMs.value).toBe(300e3 - 250)
 		})
+
+		it('should stop after duration ends', () => {
+			jest.advanceTimersByTime(300e3)
+			expect(timer.status.value).toBe(TimerState.finished)
+		})
+
+		it('should call finish after duration ends', () => {
+			// TODO check why spy doesn't work while state is properly updated
+			// const finishSpy = jest.spyOn(timer, 'finish')
+
+			jest.advanceTimersByTime(300e3)
+			expect(timer.status.value).toBe(TimerState.finished)
+			// expect(finishSpy).toHaveBeenCalled()
+		})
+
+		it('should stop after exact duration', () => {
+			// Set very long rate so overshoots expected time left
+			const time = Date.now()
+			timer = useTimer(300, true, 400e3)
+
+			jest.runAllTimers()
+			expect(timer.timeLeftMs.value).toBe(0)
+			expect(timer.status.value).toBe(TimerState.finished)
+			expect(Date.now() - time).toBe(300e3)
+		})
 	})
 
 	describe('pause', () => {

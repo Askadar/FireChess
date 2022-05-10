@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 export enum TimerState {
 	idle,
 	running,
+	finished,
 }
 
 export const useTimer = (duration: number = 300, startOnCreation = true, advanceRateMs = 10) => {
@@ -15,6 +16,11 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 	const addTime = (duration: number) => {
 		timeLeftMs.value += duration
 	}
+
+	const finish = () => {
+		timeLeftMs.value = 0
+		status.value = TimerState.finished
+	}
 	const advanceTime = () => {
 		if (status.value !== TimerState.running) return false
 
@@ -24,7 +30,13 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 
 		// Since advanceTime is called from pause to tally time elapsed since last tick till pause, we should clear timeout to not let it hang around and potentially double tick in case of rapid play-pause-play
 		clearTimeout(_timeout.value)
-		_timeout.value = setTimeout(advanceTime, advanceRateMs) as unknown as number
+		if (timeLeftMs.value <= 0) return finish()
+
+		_timeout.value = setTimeout(
+			advanceTime,
+			// shortcicuit timeout to prevent needless accuracy loss
+			Math.min(advanceRateMs, timeLeftMs.value)
+		) as unknown as number
 	}
 	const play = () => {
 		status.value = TimerState.running
@@ -53,5 +65,6 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 		play,
 		pause,
 		destroy,
+		finish,
 	}
 }

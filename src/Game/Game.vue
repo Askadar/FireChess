@@ -8,8 +8,10 @@ import firebase from 'firebase'
 import { useRoomsCollection, RoomSchema } from '../common'
 import { useBoard } from './useBoard'
 import { useChess } from './useChess'
+import { useGameTimer } from './useGameTimer'
 import { useInterval } from '../common/useInterval'
 import { fieldValues } from '../firebase'
+import { Timing } from '../common/useRoomsCollection'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true } },
@@ -19,11 +21,12 @@ export default defineComponent({
 		const roomId = params.roomId as string
 		const router = useRouter()
 
-		const playingAs = ref('w')
+		const playingAs = ref<'w' | 'b'>('w')
 		const matchStart = ref(false)
 		const gameOver = ref(false)
 		const whiteName = ref('')
 		const blackName = ref('')
+		const prevTurn = ref('w')
 		const room = ref<RoomSchema>()
 
 		const { collection, updateRoom } = useRoomsCollection({ uid, username: 'null' })
@@ -35,12 +38,19 @@ export default defineComponent({
 			gameOver,
 			room,
 		})
+		const {
+			myTimer,
+			theirTimer,
+			play: startGameTimer,
+			turnMade,
+		} = useGameTimer({ gameDuration: 300 })
 		const { board, resetBoard, updateBoard } = useBoard({
 			uid,
 			chess,
 			roomId,
 			matchStart,
 			playingAs,
+			timers: { myTimer, theirTimer },
 		})
 
 		const refreshRoomTimer = () =>
@@ -55,8 +65,8 @@ export default defineComponent({
 			resetGame()
 		}
 
-		const { stop } = useInterval(refreshRoomTimer, 60e3)
-		onUnmounted(stop)
+		const { stop: stopRoomHeartbeat } = useInterval(refreshRoomTimer, 60e3)
+		onUnmounted(stopRoomHeartbeat)
 
 		const onRoomDataUpdate = (roomData: RoomSchema) => {
 			const { gameBoard } = roomData
@@ -69,14 +79,25 @@ export default defineComponent({
 				board.value?.orientation(playingAs.value === 'b' ? 'black' : 'white')
 			}
 
-			if (roomData.players.length === 2) matchStart.value = true
-			if (matchStart.value) stop()
+			if (roomData.players.length === 2) {
+				matchStart.value = true
+				startGameTimer(prevTurn.value === playingAs.value)
+			}
+			if (matchStart.value) stopRoomHeartbeat()
 
 			updateBoard(gameBoard)
 			updateGame(gameBoard)
 			gameOver.value = chess.value.game_over()
 			if (roomData.gameStatus === 'forfeited') gameOver.value = true
 			room.value = roomData
+
+			if (prevTurn.value !== chess.value.turn()) {
+				let remoteDelayCompensation: Timing | undefined
+				if (prevTurn.value !== playingAs.value) remoteDelayCompensation = roomData.timing
+
+				turnMade({ remoteDelayCompensation, playingAs: playingAs.value })
+			}
+			prevTurn.value = chess.value.turn()
 		}
 
 		const leaveRoom = () => {
@@ -117,6 +138,9 @@ export default defineComponent({
 			leaveRoom,
 			restartGame,
 			gameStatusLabel,
+
+			myTimer,
+			theirTimer,
 		}
 	},
 })
@@ -138,6 +162,9 @@ export default defineComponent({
 			<div class="card mb-3">
 				<div class="card-header">Ход игры</div>
 				<div class="card-body">
+					<p class="card-text">
+						My time: {{ myTimer.timeLeft }}s, their time: {{ theirTimer.timeLeft }}s
+					</p>
 					<p class="card-text">{{ gameStatusLabel }}</p>
 					<button v-if="gameOver" type="button" class="btn btn-outline-dark" @click="restartGame">
 						<i class="fas fa-sync-alt me-2"></i>Reset Board

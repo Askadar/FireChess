@@ -17,6 +17,10 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 		timeLeftMs.value += duration
 	}
 
+	const setTime = (newTime: number) => {
+		timeLeftMs.value = newTime
+	}
+
 	const finish = () => {
 		timeLeftMs.value = 0
 		status.value = TimerState.finished
@@ -62,6 +66,7 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 		timeLeft,
 
 		addTime,
+		setTime,
 		play,
 		pause,
 		destroy,

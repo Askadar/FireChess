@@ -53,8 +53,8 @@ describe('useTimer', () => {
 		})
 
 		it('should stop after exact duration', () => {
-			// Set very long rate so overshoots expected time left
 			const time = Date.now()
+			// Set very long rate that overshoots expected time left
 			timer = useTimer(300, true, 400e3)
 
 			jest.runAllTimers()

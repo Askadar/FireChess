@@ -9,6 +9,7 @@ import { useNotification } from './useNotification'
 import { useTypedCollection } from './useTypedCollection'
 
 export type PlayerSchema = { uid: string; name: string }
+export type Timing = { whiteTime: number; blackTime: number; updated: firebase.firestore.Timestamp }
 
 export interface RoomSchema {
 	readonly id: string
@@ -16,7 +17,8 @@ export interface RoomSchema {
 	players: string[]
 	white?: PlayerSchema
 	black?: PlayerSchema
-	lost?: string,
+	timing?: Timing
+	lost?: string
 	gameBoard: string
 	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited'
 	created: firebase.firestore.Timestamp

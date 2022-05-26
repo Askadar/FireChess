@@ -1,16 +1,24 @@
 import { computed, onMounted, Ref, ref } from 'vue'
 import { ChessInstance, Square, Piece } from 'chess.js'
+import firebase from 'firebase'
 import { useRoomsCollection } from '../common'
 import { Chessboard } from '../externals'
+import { Timing } from '../common/useRoomsCollection'
+import { fieldValues } from '../firebase'
 
+export type Timers = {
+	myTimer: Record<'timeLeftMs', number>
+	theirTimer: Record<'timeLeftMs', number>
+}
 export const useBoard = (props: {
 	roomId: string
 	uid: string
 	chess: Ref<ChessInstance>
 	playingAs: Ref<string>
 	matchStart: Ref<boolean>
+	timers: Timers
 }) => {
-	const { roomId, uid, chess, playingAs, matchStart } = props
+	const { roomId, uid, chess, playingAs, matchStart, timers } = props
 
 	const { updateRoom } = useRoomsCollection({ uid, username: 'invalid param' })
 	const hoverColour = computed(() => {
@@ -53,7 +61,12 @@ export const useBoard = (props: {
 
 		if (move === null) return 'snapback'
 
-		updateRoom(roomId, { gameBoard: chess.value.fen() })
+		const timing: Timing = {
+			whiteTime: playingAs.value === 'w' ? timers.myTimer.timeLeftMs : timers.theirTimer.timeLeftMs,
+			blackTime: playingAs.value === 'w' ? timers.theirTimer.timeLeftMs : timers.myTimer.timeLeftMs,
+			updated: fieldValues.serverTimestamp() as unknown as firebase.firestore.Timestamp,
+		}
+		updateRoom(roomId, { gameBoard: chess.value.fen(), timing })
 	}
 
 	const onMouseoverSquare = (square: Square) => {

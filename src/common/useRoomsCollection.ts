@@ -121,7 +121,7 @@ export const useRoomsCollection = (
 		try {
 			const doc = await getRoom(id)
 			const room = doc.data()
-			if (!doc.exists || !room) throw new Error(`Empty/nonexistant document`)
+			if (!doc.exists() || !room) throw new Error(`Empty/nonexistant document`)
 
 			if (room.players.length >= 2) sendWarning(`Комната уже заполнена`)
 			if (uid === room.owner || room.players.some((p) => p === uid))
@@ -142,7 +142,7 @@ export const useRoomsCollection = (
 			const doc = await getRoom(id)
 			const room = doc.data()
 
-			if (!doc.exists || !room) throw new Error(`Empty/nonexistant document`)
+			if (!doc.exists() || !room) throw new Error(`Empty/nonexistant document`)
 
 			if ((room.players.length === 1 && room.players[0] === uid) || room.players.length === 0)
 				return deleteRoom(doc)

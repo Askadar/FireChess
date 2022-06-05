@@ -1,19 +1,19 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
-import firebase from 'firebase'
-
-import { auth } from '../firebase'
+import { User, signInAnonymously } from 'firebase/auth'
 import { authState } from 'rxfire/auth'
 import { untilUnmounted } from 'vuse-rx'
 
+import { auth } from '../firebase'
+
 export default defineComponent({
   setup() {
-    const user = ref<null | firebase.User>(null)
+    const user = ref<null | User>(null)
 
     untilUnmounted(authState(auth)).subscribe((u) => {
       user.value = u
     })
-    auth.signInAnonymously()
+    signInAnonymously(auth)
 
     return { user }
   },

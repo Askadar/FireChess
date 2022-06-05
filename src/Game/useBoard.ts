@@ -1,10 +1,9 @@
 import { computed, onMounted, Ref, ref } from 'vue'
-import { ChessInstance, Square, Piece } from 'chess.js'
-import firebase from 'firebase'
+import { serverTimestamp, Timestamp } from 'firebase/firestore'
+import { ChessInstance, Square } from 'chess.js'
 import { useRoomsCollection } from '../common'
 import { Chessboard } from '../externals'
 import { Timing } from '../common/useRoomsCollection'
-import { fieldValues } from '../firebase'
 
 export type Timers = {
 	myTimer: Record<'timeLeftMs', number>
@@ -64,7 +63,7 @@ export const useBoard = (props: {
 		const timing: Timing = {
 			whiteTime: playingAs.value === 'w' ? timers.myTimer.timeLeftMs : timers.theirTimer.timeLeftMs,
 			blackTime: playingAs.value === 'w' ? timers.theirTimer.timeLeftMs : timers.myTimer.timeLeftMs,
-			updated: fieldValues.serverTimestamp() as unknown as firebase.firestore.Timestamp,
+			updated: serverTimestamp() as unknown as Timestamp,
 		}
 		updateRoom(roomId, { gameBoard: chess.value.fen(), timing })
 	}

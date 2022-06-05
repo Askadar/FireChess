@@ -1,15 +1,17 @@
-import firebase from 'firebase'
+import {
+	CollectionReference,
+	FirestoreDataConverter,
+	QueryDocumentSnapshot,
+} from 'firebase/firestore'
 
-export const useTypedCollection = <T extends { id: string }>(
-	collection: firebase.firestore.CollectionReference
-) => {
-	const converter: firebase.firestore.FirestoreDataConverter<T> = {
+export const useTypedCollection = <T extends { id: string }>(collection: CollectionReference) => {
+	const converter: FirestoreDataConverter<T> = {
 		toFirestore: (data) => {
 			const copy = { ...data }
 			delete copy.id
 			return copy
 		},
-		fromFirestore: (snap: firebase.firestore.QueryDocumentSnapshot, options) => {
+		fromFirestore: (snap: QueryDocumentSnapshot, options) => {
 			const data = snap.data(options) as T
 			return { ...data, id: snap.id }
 		},

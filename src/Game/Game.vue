@@ -1,16 +1,15 @@
 <script lang="ts">
 import { defineComponent, onUnmounted, ref } from 'vue'
+import { serverTimestamp, Timestamp } from 'firebase/firestore'
 import { docData } from 'rxfire/firestore'
 import { untilUnmounted } from 'vuse-rx/src'
 import { useRoute, useRouter } from 'vue-router'
-import firebase from 'firebase'
 
 import { useRoomsCollection, RoomSchema } from '../common'
 import { useBoard } from './useBoard'
 import { useChess } from './useChess'
 import { useGameTimer } from './useGameTimer'
 import { useInterval } from '../common/useInterval'
-import { fieldValues } from '../firebase'
 import { Timing } from '../common/useRoomsCollection'
 
 export default defineComponent({
@@ -29,7 +28,7 @@ export default defineComponent({
 		const prevTurn = ref('w')
 		const room = ref<RoomSchema>()
 
-		const { collection, updateRoom } = useRoomsCollection({ uid, username: 'null' })
+		const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
 
 		const { chess, resetGame, updateGame, gameStatusLabel } = useChess({
 			matchStart,
@@ -54,7 +53,7 @@ export default defineComponent({
 		})
 
 		const refreshRoomTimer = () =>
-			updateRoom(roomId, { created: fieldValues.serverTimestamp() as firebase.firestore.Timestamp })
+			updateRoom(roomId, { created: serverTimestamp() as Timestamp })
 		const restartGame = async () => {
 			if (!room.value) throw new Error(`Unexpected empty room value when restarting game`)
 
@@ -127,7 +126,7 @@ export default defineComponent({
 			router.push(`/`)
 		}
 
-		untilUnmounted(docData<RoomSchema>(collection.doc(roomId))).subscribe(onRoomDataUpdate)
+		untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
 
 		return {
 			room,

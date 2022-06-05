@@ -1,15 +1,30 @@
-import firebase from 'firebase'
-
+import {
+	addDoc,
+	arrayRemove,
+	arrayUnion,
+	collection,
+	deleteDoc,
+	deleteField,
+	doc,
+	DocumentSnapshot,
+	getDoc,
+	orderBy,
+	query,
+	serverTimestamp,
+	Timestamp,
+	updateDoc,
+	where,
+} from 'firebase/firestore'
 import { collectionData } from 'rxfire/firestore'
 import { startWith } from 'rxjs/operators'
 import { refFrom } from 'vuse-rx'
 
-import { db, fieldValues, Timestamp } from '../firebase'
+import { db } from '../firebase'
 import { useNotification } from './useNotification'
 import { useTypedCollection } from './useTypedCollection'
 
 export type PlayerSchema = { uid: string; name: string }
-export type Timing = { whiteTime: number; blackTime: number; updated: firebase.firestore.Timestamp }
+export type Timing = { whiteTime: number; blackTime: number; updated: Timestamp }
 
 export interface RoomSchema {
 	readonly id: string
@@ -21,7 +36,7 @@ export interface RoomSchema {
 	lost?: string
 	gameBoard: string
 	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited'
-	created: firebase.firestore.Timestamp
+	created: Timestamp
 }
 
 export const useRoomsCollection = (
@@ -32,14 +47,18 @@ export const useRoomsCollection = (
 	const { roomLimit } = options
 
 	const { sendInfo, sendWarning } = useNotification()
-	const collection = useTypedCollection<RoomSchema>(db.collection('rooms'))
+	const roomsCollection = useTypedCollection<RoomSchema>(collection(db, 'rooms'))
 
-	const query = collection
+	const filteredRooms = query(
+		roomsCollection,
 		// Cuts off stale rooms
-		.where('created', '>', Timestamp.fromDate(new Date(Date.now() - 90e3)))
-		.orderBy('created', 'asc')
+		where('created', '>', Timestamp.fromDate(new Date(Date.now() - 90e3))),
+		orderBy('created', 'asc')
+	)
 	const rooms = refFrom(
-		collectionData<RoomSchema>(query, 'id').pipe(startWith([] as RoomSchema[])),
+		collectionData<RoomSchema>(filteredRooms, { idField: 'id' }).pipe(
+			startWith([] as RoomSchema[])
+		),
 		[]
 	)
 
@@ -51,7 +70,7 @@ export const useRoomsCollection = (
 			return false
 		}
 
-		return collection.add({
+		return addDoc(roomsCollection, {
 			id: '',
 			owner: uid,
 			players: [uid],
@@ -59,30 +78,32 @@ export const useRoomsCollection = (
 			gameBoard: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
 			gameStatus: 'waiting',
 			// Forced type cause firestore types serverTimestamp as FieldValue instead of Timestamp
-			created: fieldValues.serverTimestamp() as unknown as firebase.firestore.Timestamp,
+			created: serverTimestamp(),
 		})
 	}
 
+	const getRoomRef = (id: string) => doc(roomsCollection, id)
+
 	const getRoom = async (id: string) => {
-		return collection.doc(id).get()
+		return getDoc(getRoomRef(id))
 	}
 
 	const updateRoom = async (
-		roomOrId: string | firebase.firestore.DocumentSnapshot<RoomSchema>,
+		roomOrId: string | DocumentSnapshot<RoomSchema>,
 		updateData: Partial<RoomSchema>
 	) => {
 		const room = typeof roomOrId === 'string' ? await getRoom(roomOrId) : roomOrId
-		return room.ref.update(updateData)
+		return updateDoc(room.ref, updateData)
 	}
 
-	const deleteRoom = async (roomOrId: string | firebase.firestore.DocumentSnapshot<RoomSchema>) => {
+	const deleteRoom = async (roomOrId: string | DocumentSnapshot<RoomSchema>) => {
 		const id = typeof roomOrId === 'string' ? roomOrId : roomOrId.id
-		return collection.doc(id).delete()
+		return deleteDoc(doc(roomsCollection, id))
 	}
 
-	const tickActiveRoom = async (room: string | firebase.firestore.DocumentSnapshot<RoomSchema>) =>
+	const tickActiveRoom = async (room: string | DocumentSnapshot<RoomSchema>) =>
 		updateRoom(room, {
-			created: fieldValues.serverTimestamp() as unknown as firebase.firestore.Timestamp,
+			created: serverTimestamp() as unknown as Timestamp,
 		})
 
 	const generateRoomLabel = (room: RoomSchema) => {
@@ -108,7 +129,7 @@ export const useRoomsCollection = (
 
 			updateRoom(doc, {
 				black: { uid: uid, name: username },
-				players: fieldValues.arrayUnion(uid) as unknown as string[],
+				players: arrayUnion(uid) as unknown as string[],
 				gameStatus: room.players.length === 1 ? 'in progress' : room.gameStatus,
 			})
 		} catch (error) {
@@ -129,8 +150,8 @@ export const useRoomsCollection = (
 			if (room.players.length >= 2 && room.players.some((p) => p === uid)) {
 				const playingAs = room.black?.uid === uid ? 'black' : 'white'
 				updateRoom(doc, {
-					[playingAs]: fieldValues.delete(),
-					players: fieldValues.arrayRemove(uid) as unknown as string[],
+					[playingAs]: deleteField(),
+					players: arrayRemove(uid) as unknown as string[],
 				})
 			}
 		} catch (error) {
@@ -139,12 +160,13 @@ export const useRoomsCollection = (
 	}
 
 	return {
-		query,
-		collection,
+		query: filteredRooms,
+		collection: roomsCollection,
 		rooms,
 		generateRoomLabel,
 		createRoom,
 		getRoom,
+		getRoomRef,
 		updateRoom,
 		deleteRoom,
 		tickActiveRoom,

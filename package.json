@@ -4,8 +4,9 @@
 	"private": true,
 	"scripts": {
 		"build": "parcel build public/index.html",
-		"dev": "rm .parcel-cache/ -rf && parcel serve public/index.html",
-		"deploy": "rm dist -rf && yarn build && cp public/img dist/img -r && firebase deploy",
+		"dev": "rm -rf .parcel-cache/ && parcel serve public/index.html",
+		"deploy": "rm -rf dist && yarn build && cp public/img dist/img -r && firebase deploy",
+		"deploy:current": "firebase deploy",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"coverage": "jest --coverage"
@@ -13,11 +14,11 @@
 	"dependencies": {
 		"@chrisoakman/chessboardjs": "^1.0.0",
 		"chess.js": "^0.11.0",
-		"firebase": "^8.4.1",
-		"rxfire": "^4.0.0",
+		"firebase": "^9.8.2",
+		"rxfire": "^6.0.3",
 		"rxjs": "^6.6.7",
 		"vue": "^3.2.31",
-		"vue-router": "4",
+		"vue-router": "^4.0.15",
 		"vue-toastification": "^2.0.0-rc.5",
 		"vuse-rx": "^0.13.1"
 	},

@@ -161,7 +161,7 @@ export const useRoomsCollection = (
 
 	return {
 		query: filteredRooms,
-		collection: roomsCollection,
+		_collection: roomsCollection,
 		rooms,
 		generateRoomLabel,
 		createRoom,

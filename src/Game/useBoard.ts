@@ -1,9 +1,10 @@
-import { computed, onMounted, Ref, ref } from 'vue'
-import { serverTimestamp, Timestamp } from 'firebase/firestore'
-import { ChessInstance, Square } from 'chess.js'
-import { useRoomsCollection } from '../common'
+import { Ref, computed, onMounted, ref } from 'vue'
+import { Square, UseChess } from './useChess'
+import { Timestamp, serverTimestamp } from 'firebase/firestore'
+
 import { Chessboard } from '../externals'
 import { Timing } from '../common/useRoomsCollection'
+import { useRoomsCollection } from '../common'
 
 export type Timers = {
 	myTimer: Record<'timeLeftMs', number>
@@ -12,12 +13,16 @@ export type Timers = {
 export const useBoard = (props: {
 	roomId: string
 	uid: string
-	chess: Ref<ChessInstance>
 	playingAs: Ref<string>
 	matchStart: Ref<boolean>
+	turn: Ref<'w' | 'b'>
+	gameOver: Ref<boolean>
+	fen: Ref<string>
+	move: UseChess['move']
+	getMoves: UseChess['getMoves']
 	timers: Timers
 }) => {
-	const { roomId, uid, chess, playingAs, matchStart, timers } = props
+	const { roomId, uid, playingAs, matchStart, timers, turn, gameOver, move, getMoves, fen } = props
 
 	const { updateRoom } = useRoomsCollection({ uid, username: 'invalid param' })
 	const hoverColour = computed(() => {
@@ -37,8 +42,8 @@ export const useBoard = (props: {
 	}
 
 	const canMove = (piece: string) => {
-		if (chess.value.game_over()) return false
-		const currentTurnColour = chess.value.turn()
+		if (gameOver.value) return false
+		const currentTurnColour = turn.value
 
 		return !(
 			(currentTurnColour === 'w' && piece.search(/^b/) !== -1) ||
@@ -51,28 +56,24 @@ export const useBoard = (props: {
 
 	const onDrop = (source: Square, target: Square) => {
 		removeHighlights()
-
-		var move = chess.value.move({
+		let currentMove = move({
 			from: source,
 			to: target,
 			promotion: 'q', // TODO allow promotion selection
 		})
 
-		if (move === null) return 'snapback'
+		if (currentMove === null) return 'snapback'
 
 		const timing: Timing = {
 			whiteTime: playingAs.value === 'w' ? timers.myTimer.timeLeftMs : timers.theirTimer.timeLeftMs,
 			blackTime: playingAs.value === 'w' ? timers.theirTimer.timeLeftMs : timers.myTimer.timeLeftMs,
 			updated: serverTimestamp() as unknown as Timestamp,
 		}
-		updateRoom(roomId, { gameBoard: chess.value.fen(), timing })
+		updateRoom(roomId, { gameBoard: fen.value, timing })
 	}
 
 	const onMouseoverSquare = (square: Square) => {
-		const moves = chess.value.moves({
-			square,
-			verbose: true,
-		})
+		const moves = getMoves(square)
 
 		if (moves.length === 0) return
 
@@ -82,7 +83,7 @@ export const useBoard = (props: {
 	const onMouseoutSquare = removeHighlights
 
 	const onSnapEnd = () => {
-		board.value.position(chess.value.fen())
+		board.value.position(fen.value)
 	}
 
 	const config = {
@@ -99,6 +100,8 @@ export const useBoard = (props: {
 
 	const resetBoard = () => board.value.start()
 	const updateBoard = (newBoard: string) => board.value?.position(newBoard)
+	const changeBoardOrientation = (orientation: 'black' | 'white') =>
+		board.value.orientation(orientation)
 
-	return { board, resetBoard, updateBoard }
+	return { _board: board, resetBoard, updateBoard, changeBoardOrientation }
 }

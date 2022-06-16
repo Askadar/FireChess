@@ -1,16 +1,13 @@
 <script lang="ts">
-import { defineComponent, onUnmounted, ref } from 'vue'
+import { defineComponent, onUnmounted } from 'vue'
 import { serverTimestamp, Timestamp } from 'firebase/firestore'
 import { docData } from 'rxfire/firestore'
-import { untilUnmounted } from 'vuse-rx/src'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useRoomsCollection, RoomSchema } from '../common'
-import { useBoard } from './useBoard'
-import { useChess } from './useChess'
-import { useGameTimer } from './useGameTimer'
 import { useInterval } from '../common/useInterval'
-import { Timing } from '../common/useRoomsCollection'
+import { useGame } from './useGame'
+import { Subscription } from 'rxjs'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true } },
@@ -20,124 +17,61 @@ export default defineComponent({
 		const roomId = params.roomId as string
 		const router = useRouter()
 
-		const playingAs = ref<'w' | 'b'>('w')
-		const matchStart = ref(false)
-		const gameOver = ref(false)
-		const whiteName = ref('')
-		const blackName = ref('')
-		const prevTurn = ref('w')
-		const room = ref<RoomSchema>()
-
 		const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
-
-		const { chess, resetGame, updateGame, gameStatusLabel } = useChess({
-			matchStart,
-			whiteName,
-			blackName,
-			gameOver,
-			room,
-		})
-		const {
-			myTimer,
-			theirTimer,
-			play: startGameTimer,
-			turnMade,
-		} = useGameTimer({ gameDuration: 300 })
-		const { board, resetBoard, updateBoard } = useBoard({
-			uid,
-			chess,
-			roomId,
-			matchStart,
-			playingAs,
-			timers: { myTimer, theirTimer },
-		})
+		const { _room, gameOver, restartGame, gameStatusLabel, myTimer, theirTimer } = useGame({ uid, roomId })
 
 		const refreshRoomTimer = () =>
 			updateRoom(roomId, { created: serverTimestamp() as Timestamp })
-		const restartGame = async () => {
-			if (!room.value) throw new Error(`Unexpected empty room value when restarting game`)
-
-			await updateRoom(room.value.id, {
-				gameBoard: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-			})
-			resetBoard()
-			resetGame()
-		}
 
 		const { stop: stopRoomHeartbeat } = useInterval(refreshRoomTimer, 60e3)
-		onUnmounted(stopRoomHeartbeat)
 
-		const onRoomDataUpdate = (roomData: RoomSchema) => {
-			const { gameBoard } = roomData
-			if (!gameBoard) return
-
-			if (!matchStart.value) {
-				whiteName.value = roomData.white?.name || ''
-				blackName.value = roomData.black?.name || ''
-				playingAs.value = roomData?.black?.uid === uid ? 'b' : 'w'
-				board.value?.orientation(playingAs.value === 'b' ? 'black' : 'white')
-			}
-
-			if (roomData.players.length === 2) {
-				matchStart.value = true
-				startGameTimer(prevTurn.value === playingAs.value)
-			}
-			if (matchStart.value) stopRoomHeartbeat()
-
-			updateBoard(gameBoard)
-			updateGame(gameBoard)
-			gameOver.value = chess.value.game_over()
-			if (roomData.gameStatus === 'forfeited') gameOver.value = true
-			room.value = roomData
-
-			if (prevTurn.value !== chess.value.turn()) {
-				let remoteDelayCompensation: Timing | undefined
-				if (prevTurn.value !== playingAs.value) remoteDelayCompensation = roomData.timing
-
-				turnMade({ remoteDelayCompensation, playingAs: playingAs.value })
-			}
-			prevTurn.value = chess.value.turn()
+		let heartbeatSub: Subscription;
+		const stopHeartbeat = () => {
+			stopRoomHeartbeat()
+			heartbeatSub?.unsubscribe()
 		}
+		heartbeatSub = docData<RoomSchema>(getRoomRef(roomId)).subscribe(roomData => {
+			if (roomData.players.length !== 2) return false
+
+			stopHeartbeat()
+		})
+		onUnmounted(stopHeartbeat)
 
 		const leaveRoom = () => {
-			if (room.value)
-				if (room.value.owner === uid) {
-					const extraClause =
-						gameOver.value === false && room.value?.gameStatus !== 'waiting'
-							? ' и Вам будет засчитано поражение'
-							: ''
-					const acceptCloseRoom = confirm(
-						`Если вернуться в лобби, комната будет закрыта${extraClause}. Закрыть комнату и вернуться в лобби?`
-					)
-					if (!acceptCloseRoom) return false
+			if (!_room.value)
+				return false
 
-					updateRoom(roomId, {
-						gameStatus: gameOver.value === true ? 'finished' : 'forfeited',
-						lost: gameOver.value === true && !room.value.lost ? uid : room.value.lost || undefined,
-					})
-				} else if (room.value.players.some((p) => p === uid) && !gameOver.value) {
-					const acceptLeaveRoom = confirm(
-						`Если вернуться в лобби, Вам будет засчитано поражение. Принять поражение и вернуться в лобби?`
-					)
-					if (!acceptLeaveRoom) return false
-					if (!gameOver.value) updateRoom(roomId, { gameStatus: 'forfeited', lost: uid })
-				}
+			if (_room.value.owner === uid) {
+				const extraClause =
+					gameOver.value === false && _room.value?.gameStatus !== 'waiting'
+						? ' и Вам будет засчитано поражение'
+						: ''
+				const acceptCloseRoom = confirm(
+					`Если вернуться в лобби, комната будет закрыта${extraClause}. Закрыть комнату и вернуться в лобби?`
+				)
+				if (!acceptCloseRoom) return false
+
+				updateRoom(roomId, {
+					gameStatus: gameOver.value === true ? 'finished' : 'forfeited',
+					lost: gameOver.value === true && !_room.value.lost ? uid : _room.value.lost || undefined,
+				})
+			} else if (_room.value.players.some((p) => p === uid) && !gameOver.value) {
+				const acceptLeaveRoom = confirm(
+					`Если вернуться в лобби, Вам будет засчитано поражение. Принять поражение и вернуться в лобби?`
+				)
+				if (!acceptLeaveRoom) return false
+				if (!gameOver.value) updateRoom(roomId, { gameStatus: 'forfeited', lost: uid })
+			}
 
 			router.push(`/`)
 		}
 
-		untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
-
 		return {
-			room,
 			roomId,
 			gameOver,
-			chess,
-			board,
 			leaveRoom,
 			restartGame,
 			gameStatusLabel,
-
 			myTimer,
 			theirTimer,
 		}

@@ -3,10 +3,14 @@ import { useTimer, TimerState } from '../common'
 import { Timing } from '../common/useRoomsCollection'
 
 export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
-	const _advanceRate = 250
+	const resolutionMs = 250
 
-	const myTimer = reactive(useTimer(gameDuration, false, _advanceRate))
-	const theirTimer = reactive(useTimer(gameDuration, false, _advanceRate))
+	const myTimer = reactive(
+		useTimer({ duration: gameDuration, startOnCreation: false, resolutionMs })
+	)
+	const theirTimer = reactive(
+		useTimer({ duration: gameDuration, startOnCreation: false, resolutionMs })
+	)
 	onUnmounted(() => {
 		myTimer.destroy()
 		theirTimer.destroy()

@@ -18,7 +18,7 @@ describe('useTimer', () => {
 			expect(timer.status.value).toBe(TimerState.running)
 		})
 		it('should init as idle with startOnCreation = false', () => {
-			timer = useTimer(1, false)
+			timer = useTimer({ duration: 1, startOnCreation: false })
 			expect(timer.status.value).toBe(TimerState.idle)
 		})
 	})
@@ -55,7 +55,7 @@ describe('useTimer', () => {
 		it('should stop after exact duration', () => {
 			const time = Date.now()
 			// Set very long rate that overshoots expected time left
-			timer = useTimer(300, true, 400e3)
+			timer = useTimer({ duration: 300, startOnCreation: true, resolutionMs: 400e3 })
 
 			jest.runAllTimers()
 			expect(timer.timeLeftMs.value).toBe(0)
@@ -73,7 +73,7 @@ describe('useTimer', () => {
 		})
 
 		it('should return timeLeftMs after calling', () => {
-			timer = useTimer(60, true, 50)
+			timer = useTimer({ duration: 60, startOnCreation: true, resolutionMs: 50 })
 			jest.advanceTimersByTime(33)
 
 			expect(timer.pause()).toBe(60e3 - 33)

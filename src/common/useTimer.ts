@@ -6,7 +6,12 @@ export enum TimerState {
 	finished,
 }
 
-export const useTimer = (duration: number = 300, startOnCreation = true, advanceRateMs = 10) => {
+export const useTimer = (props?: {
+	duration?: number
+	startOnCreation?: boolean
+	resolutionMs?: number
+}) => {
+	const { duration = 300, startOnCreation = true, resolutionMs = 10 } = props || {}
 	const _timeout = ref<number>(-1)
 	const lastEndpoint = ref<number>(0)
 	const status = ref<TimerState>(TimerState.idle)
@@ -18,6 +23,8 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 	}
 
 	const setTime = (newTime: number) => {
+		// Advance time before setting new timeLeft so lastEndpoint is updated
+		advanceTime()
 		timeLeftMs.value = newTime
 	}
 
@@ -38,8 +45,8 @@ export const useTimer = (duration: number = 300, startOnCreation = true, advance
 
 		_timeout.value = setTimeout(
 			advanceTime,
-			// shortcicuit timeout to prevent needless accuracy loss
-			Math.min(advanceRateMs, timeLeftMs.value)
+			// short circuit timeout to prevent needless accuracy loss
+			Math.min(resolutionMs, timeLeftMs.value)
 		) as unknown as number
 	}
 	const play = () => {

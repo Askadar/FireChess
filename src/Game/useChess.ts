@@ -2,8 +2,9 @@ import { Chess, Move, ShortMove } from 'chess.js'
 import { Ref, computed, ref } from 'vue'
 
 import { RoomSchema } from '../common'
+import { colourToLong, getByLongColour, getOtherLongColour, getPlayerColour } from '../helpers'
 
-export { Square } from 'chess.js'
+import { ExternalState } from './useExternalState'
 export interface UseChess {
 	move(moveDef: ShortMove): Move | null
 	getMoves(square: string): Move[]
@@ -14,9 +15,10 @@ export const useChess = (props: {
 	whiteName: Ref<string>
 	matchStart: Ref<boolean>
 	gameOver: Ref<boolean>
+	externalState: ExternalState
 	room: Ref<RoomSchema | undefined>
 }) => {
-	const { blackName, whiteName, matchStart, gameOver, room } = props
+	const { blackName, whiteName, matchStart, gameOver, externalState, room } = props
 	const chess = ref(new Chess())
 	const turn = ref(chess.value.turn())
 	const fen = ref(chess.value.fen())
@@ -35,7 +37,7 @@ export const useChess = (props: {
 	const getMoves: UseChess['getMoves'] = (square) => chess.value.moves({ square, verbose: true })
 
 	const gameResult = computed(() => {
-		const completeGameOverState = chess.value.game_over() || gameOver.value
+		const completeGameOverState = chess.value.game_over() || externalState.gameOver
 		const draw = chess.value.in_draw()
 
 		let winnerColour: 'black' | 'white' | null = null
@@ -43,15 +45,18 @@ export const useChess = (props: {
 		let loserPlayer: string | null = null
 
 		if (completeGameOverState && room.value) {
-			winnerColour = turn.value === 'b' ? 'white' : 'black'
-			winnerPlayer = room.value[winnerColour]?.uid || null
+			winnerColour = colourToLong(turn.value)
 			if (room.value.lost) {
 				winnerColour = room.value.black?.uid === room.value.lost ? 'white' : 'black'
-				winnerPlayer = room.value[winnerColour]?.uid || null
+			}
+			if (externalState.lost) {
+				winnerColour = colourToLong(getPlayerColour(room.value, externalState.lost)) || null
 			}
 
-			const loserColour = winnerColour === 'white' ? 'black' : 'white'
-			loserPlayer = room.value[loserColour]?.uid || null
+			winnerPlayer = getByLongColour(room.value, winnerColour)?.uid || null
+
+			const loserColour = getOtherLongColour(winnerColour)
+			loserPlayer = getByLongColour(room.value, loserColour)?.uid || null
 		}
 
 		return { finished: completeGameOverState, draw, winnerColour, winnerPlayer, loserPlayer }
@@ -82,5 +87,15 @@ export const useChess = (props: {
 		refreshRefs()
 	}
 
-	return { _chess: chess, resetGame, updateGame, gameStatusLabel, fen, turn, move, getMoves }
+	return {
+		_chess: chess,
+		resetGame,
+		updateGame,
+		gameResult,
+		gameStatusLabel,
+		fen,
+		turn,
+		move,
+		getMoves,
+	}
 }

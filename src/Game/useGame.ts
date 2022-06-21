@@ -1,16 +1,23 @@
-import { RoomSchema, useRoomsCollection } from '../common'
-
+import { deleteField } from '@firebase/firestore'
 import { Subscription } from 'rxjs'
-import { Timing } from '../common/useRoomsCollection'
 import { docData } from 'rxfire/firestore'
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { untilUnmounted } from 'vuse-rx/src'
+
+import { RoomSchema, useEvent, useRoomsCollection, Timing, cleanBoard } from '../common'
+import { getByShortColour } from '../helpers'
+
 import { useBoard } from './useBoard'
 import { useChess } from './useChess'
 import { useGameTimer } from './useGameTimer'
+import { useExternalState } from './useExternalState'
 
 export const useGame = (props: { uid: string; roomId: string }) => {
 	const { uid, roomId } = props
+
+	// TODO extract into rule settings
+	const gameTime = 20
+	const gameDuration = 300
 
 	const playingAs = ref<'w' | 'b'>('w')
 	const matchStart = ref(false)
@@ -19,23 +26,23 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 	const blackName = ref('')
 	const prevTurn = ref('w')
 
+	const { externalState, resetExternalState } = useExternalState({ uid, roomId, username: 'null' })
+	const completeGameOverState = computed(() => externalState.gameOver || gameOver.value)
+
 	const room = ref<RoomSchema>()
 	const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
 
-	const { resetGame, updateGame, gameStatusLabel, move, fen, getMoves, turn } = useChess({
-		matchStart,
-		whiteName,
-		blackName,
-		gameOver,
-		room,
-	})
+	const { resetGame, updateGame, gameResult, gameStatusLabel, move, fen, getMoves, turn } =
+		useChess({
+			matchStart,
+			whiteName,
+			blackName,
+			gameOver,
+			externalState,
+			room,
+		})
 
-	const {
-		myTimer,
-		theirTimer,
-		play: startGameTimer,
-		turnMade,
-	} = useGameTimer({ gameDuration: 300 })
+	const { myTimer, theirTimer, play: startGameTimer, turnMade } = useGameTimer({ gameDuration })
 
 	const { changeBoardOrientation, resetBoard, updateBoard } = useBoard({
 		uid,
@@ -43,24 +50,55 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 		matchStart,
 		playingAs,
 		timers: { myTimer, theirTimer },
-		gameOver,
-		move,
+		gameOver: completeGameOverState,
 		fen,
-		getMoves,
 		turn,
+		move,
+		getMoves,
+	})
+
+	const onTimeout = (event: CustomEvent<{ myTime: number; theirTime: number }>) => {
+		if (externalState.gameOver === true || !room.value) return false
+
+		externalState.gameOver = true
+		updateGame(fen.value)
+
+		updateRoom(roomId, {
+			gameStatus: 'timeout',
+			lost: getByShortColour(room.value, turn.value)?.uid,
+		})
+
+		myTimer.pause()
+		theirTimer.pause()
+	}
+	const { dispatch } = useEvent({ evtName: 'timeout', handleEvent: onTimeout })
+
+	watch([myTimer, theirTimer], ([mTimer, tTimer]) => {
+		if (Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs) <= gameTime * 1e3) return
+
+		dispatch({ myTime: mTimer.timeLeftMs, theirTime: tTimer.timeLeftMs })
 	})
 
 	const restartGame = async () => {
 		if (!room.value) throw new Error(`Unexpected empty room value when restarting game`)
 
 		await updateRoom(room.value.id, {
-			gameBoard: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+			gameBoard: cleanBoard,
+			gameStatus: 'in progress',
+			timing: deleteField() as unknown as undefined,
+			lost: deleteField() as unknown as undefined,
 		})
+
+		myTimer.reset()
+		theirTimer.reset()
+
+		resetExternalState()
 		resetBoard()
 		resetGame()
+		startGameTimer(prevTurn.value === playingAs.value)
 	}
 
-	let roomMetaSub: Subscription;
+	let roomMetaSub: Subscription
 	const onRoomMetaUpdate = (roomMeta: RoomSchema) => {
 		if (!matchStart.value) {
 			whiteName.value = roomMeta.white?.name || ''
@@ -74,8 +112,7 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 			startGameTimer(prevTurn.value === playingAs.value)
 		}
 
-		if (matchStart.value)
-			roomMetaSub?.unsubscribe()
+		if (matchStart.value) roomMetaSub?.unsubscribe()
 	}
 
 	const onRoomDataUpdate = (roomData: RoomSchema) => {
@@ -85,7 +122,10 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 		updateBoard(gameBoard)
 		updateGame(gameBoard)
 
-		if (roomData.gameStatus === 'forfeited') gameOver.value = true
+		if (roomData.gameStatus === 'in progress' && externalState.gameOver === true) {
+			return restartGame()
+		}
+		if (roomData.gameStatus === 'forfeited') externalState.gameOver = true
 		room.value = roomData
 
 		if (prevTurn.value !== turn.value) {
@@ -100,5 +140,12 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 	roomMetaSub = untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomMetaUpdate)
 	untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
 
-	return { _room: room, gameOver, restartGame, gameStatusLabel, myTimer, theirTimer }
+	return {
+		_room: room,
+		gameOver: completeGameOverState,
+		restartGame,
+		gameStatusLabel,
+		myTimer,
+		theirTimer,
+	}
 }

@@ -37,7 +37,7 @@ export interface RoomSchema {
 	timing?: Timing
 	lost?: string
 	gameBoard: string
-	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited'
+	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited' | 'timeout'
 	created: Timestamp
 }
 

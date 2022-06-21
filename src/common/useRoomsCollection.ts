@@ -20,6 +20,8 @@ import { startWith } from 'rxjs/operators'
 import { refFrom } from 'vuse-rx'
 
 import { db } from '../firebase'
+
+import { cleanBoard } from './constants'
 import { useNotification } from './useNotification'
 import { useTypedCollection } from './useTypedCollection'
 
@@ -75,7 +77,7 @@ export const useRoomsCollection = (
 			owner: uid,
 			players: [uid],
 			white: { uid: uid, name: username || 'guest' }, // TODO allow user to select colour
-			gameBoard: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+			gameBoard: cleanBoard,
 			gameStatus: 'waiting',
 			// Forced type cause firestore types serverTimestamp as FieldValue instead of Timestamp
 			created: serverTimestamp(),

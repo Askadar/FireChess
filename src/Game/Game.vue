@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onUnmounted } from 'vue'
+import { computed, defineComponent, onUnmounted } from 'vue'
 import { serverTimestamp, Timestamp } from 'firebase/firestore'
 import { docData } from 'rxfire/firestore'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,6 +8,7 @@ import { useRoomsCollection, RoomSchema } from '../common'
 import { useInterval } from '../common/useInterval'
 import { useGame } from './useGame'
 import { Subscription } from 'rxjs'
+import { formatGameTime } from '../helpers/time'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true } },
@@ -66,14 +67,17 @@ export default defineComponent({
 			router.push(`/`)
 		}
 
+		const myTimeFormatted = computed(() => formatGameTime(myTimer.timeLeft))
+		const theirTimeFormatted = computed(() => formatGameTime(theirTimer.timeLeft))
+
 		return {
 			roomId,
 			gameOver,
 			leaveRoom,
 			restartGame,
 			gameStatusLabel,
-			myTimer,
-			theirTimer,
+			myTimeFormatted,
+			theirTimeFormatted,
 		}
 	},
 })
@@ -96,7 +100,7 @@ export default defineComponent({
 				<div class="card-header">Ход игры</div>
 				<div class="card-body">
 					<p class="card-text">
-						My time: {{ myTimer.timeLeft }}s, their time: {{ theirTimer.timeLeft }}s
+						Мое время: {{ myTimeFormatted }} | Время противника: {{ theirTimeFormatted }}
 					</p>
 					<p class="card-text">{{ gameStatusLabel }}</p>
 					<button v-if="gameOver" type="button" class="btn btn-outline-dark" @click="restartGame">

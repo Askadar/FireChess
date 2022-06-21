@@ -42,7 +42,13 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 			room,
 		})
 
-	const { myTimer, theirTimer, play: startGameTimer, turnMade } = useGameTimer({ gameDuration })
+	const {
+		myTimer,
+		theirTimer,
+		play: startGameTimer,
+		turnMade,
+		compensateTimer,
+	} = useGameTimer({ gameDuration })
 
 	const { changeBoardOrientation, resetBoard, updateBoard } = useBoard({
 		uid,
@@ -112,6 +118,9 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 			startGameTimer(prevTurn.value === playingAs.value)
 		}
 
+		if (roomMeta.timing)
+			compensateTimer({ remoteDelayCompensation: roomMeta.timing, playingAs: playingAs.value })
+
 		if (matchStart.value) roomMetaSub?.unsubscribe()
 	}
 
@@ -137,8 +146,8 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 		prevTurn.value = turn.value
 	}
 
-	roomMetaSub = untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomMetaUpdate)
 	untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
+	roomMetaSub = untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomMetaUpdate)
 
 	return {
 		_room: room,

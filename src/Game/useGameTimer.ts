@@ -30,13 +30,21 @@ export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
 		if (forMe) myTimer.play()
 		else theirTimer.play()
 	}
-	const turnMade = ({
-		remoteDelayCompensation,
-		playingAs,
-	}: {
-		remoteDelayCompensation?: Timing
-		playingAs: 'w' | 'b'
-	}) => {
+
+	const compensateTimer = (args: { remoteDelayCompensation: Timing; playingAs: 'w' | 'b' }) => {
+		const { remoteDelayCompensation, playingAs } = args
+
+		const myTime =
+			playingAs === 'w' ? remoteDelayCompensation.whiteTime : remoteDelayCompensation.blackTime
+		const theirTime =
+			playingAs === 'w' ? remoteDelayCompensation.blackTime : remoteDelayCompensation.whiteTime
+		const difference = Date.now() - remoteDelayCompensation.updated.toMillis()
+
+		myTimer.setTime(myTime - difference)
+		theirTimer.setTime(theirTime - difference)
+	}
+
+	const turnMade = (args: { remoteDelayCompensation?: Timing; playingAs: 'w' | 'b' }) => {
 		if (!currentlyPlaying.value || !currentlyPaused.value) return false
 
 		const playingTimer = currentlyPlaying.value
@@ -44,17 +52,11 @@ export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
 
 		playingTimer.pause()
 		pausedTimer.play()
-
-		if (remoteDelayCompensation) {
-			const myTime =
-				playingAs === 'w' ? remoteDelayCompensation.whiteTime : remoteDelayCompensation.blackTime
-			const theirTime =
-				playingAs === 'w' ? remoteDelayCompensation.blackTime : remoteDelayCompensation.whiteTime
-			const difference = Date.now() - remoteDelayCompensation.updated.toMillis()
-
-			myTimer.setTime(myTime - difference)
-			theirTimer.setTime(theirTime - difference)
-		}
+		if (args.remoteDelayCompensation)
+			compensateTimer({
+				remoteDelayCompensation: args.remoteDelayCompensation,
+				playingAs: args.playingAs,
+			})
 	}
 
 	return {
@@ -63,5 +65,6 @@ export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
 
 		play,
 		turnMade,
+		compensateTimer,
 	}
 }

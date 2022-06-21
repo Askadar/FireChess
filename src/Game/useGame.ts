@@ -80,7 +80,11 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 	const { dispatch } = useEvent({ evtName: 'timeout', handleEvent: onTimeout })
 
 	watch([myTimer, theirTimer], ([mTimer, tTimer]) => {
-		if (Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs) <= gameTime * 1e3) return
+		if (
+			Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs) <= gameTime * 1e3 ||
+			(mTimer.timeLeftMs > 0 && theirTimer.timeLeftMs > 0)
+		)
+			return
 
 		dispatch({ myTime: mTimer.timeLeftMs, theirTime: tTimer.timeLeftMs })
 	})

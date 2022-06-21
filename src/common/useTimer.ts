@@ -65,6 +65,10 @@ export const useTimer = (props?: {
 		if (_timeout.value !== -1) clearTimeout(_timeout.value)
 	}
 
+	const reset = () => {
+		timeLeftMs.value = duration * 1e3
+	}
+
 	if (startOnCreation) play()
 
 	return {
@@ -78,5 +82,6 @@ export const useTimer = (props?: {
 		pause,
 		destroy,
 		finish,
+		reset,
 	}
 }

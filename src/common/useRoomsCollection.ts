@@ -36,6 +36,7 @@ export interface RoomSchema {
 	black?: PlayerSchema
 	timing?: Timing
 	lost?: string
+	duration: number
 	gameBoard: string
 	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited' | 'timeout'
 	created: Timestamp
@@ -64,7 +65,7 @@ export const useRoomsCollection = (
 		[]
 	)
 
-	const createRoom = async () => {
+	const createRoom = async (roomParams: { duration: number; playAs: 'white' | 'black' }) => {
 		if (rooms.value.filter((room) => room.owner === uid).length >= roomLimit) {
 			sendWarning(
 				`Вы уже создали больше ${roomLimit} комнат, закройте некоторые прежде чем создавать новые`
@@ -72,14 +73,16 @@ export const useRoomsCollection = (
 			return false
 		}
 
+		const { duration, playAs } = roomParams
+		const playerObject = { uid: uid, name: username || 'guest' }
 		return addDoc(roomsCollection, {
 			id: '',
 			owner: uid,
 			players: [uid],
-			white: { uid: uid, name: username || 'guest' }, // TODO allow user to select colour
+			[playAs]: playerObject,
 			gameBoard: cleanBoard,
 			gameStatus: 'waiting',
-			// Forced type cause firestore types serverTimestamp as FieldValue instead of Timestamp
+			duration: duration * 60, // label minutes -> logic seconds
 			created: serverTimestamp(),
 		})
 	}

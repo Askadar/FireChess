@@ -1,5 +1,6 @@
 export { useRoomRouter } from './useRoomRouter'
 export { useRoomsCollection } from './useRoomsCollection'
+export { useRulesetsCollection } from './useRulesetsCollection'
 export { useTypedCollection } from './useTypedCollection'
 export { useNotification } from './useNotification'
 export { useTimer, TimerState } from './useTimer'

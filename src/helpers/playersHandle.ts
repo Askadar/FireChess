@@ -1,14 +1,13 @@
 import { RoomSchema, PlayerSchema } from '../common/useRoomsCollection'
 
-// TODO find a way without explicit typing, might be not possible with current typescript implementation
-type ShortToLong = { w: 'white'; b: 'black' }
-type LongToShort = { white: 'w'; black: 'b' }
-const shortToLong: ShortToLong = { w: 'white', b: 'black' }
-const longToShort: LongToShort = { white: 'w', black: 'b' }
+const shortToLong = { w: 'white', b: 'black' } as const
+const longToShort = { white: 'w', black: 'b' } as const
 
-export const colourToLong = (from: keyof ShortToLong): keyof LongToShort => shortToLong[from]
+export const colourToLong = (from: keyof typeof shortToLong): keyof typeof longToShort =>
+	shortToLong[from]
 
-export const colourToShort = (from: keyof LongToShort): keyof ShortToLong => longToShort[from]
+export const colourToShort = (from: keyof typeof longToShort): keyof typeof shortToLong =>
+	longToShort[from]
 
 const getFullPlayers = (room: RoomSchema): PlayerSchema[] =>
 	[room.white, room.black].filter((p): p is PlayerSchema => Boolean(p))
@@ -17,7 +16,7 @@ export const getByShortColour = (room: RoomSchema, colour: 'w' | 'b') =>
 	room[colourToLong(colour)] || null
 export const getByLongColour = (room: RoomSchema, colour: 'white' | 'black') => room[colour] || null
 
-export const getPlayerColour = (room: RoomSchema, uid: string): keyof ShortToLong => {
+export const getPlayerColour = (room: RoomSchema, uid: string): keyof typeof shortToLong => {
 	if (room.white) return room.white.uid === uid ? 'w' : 'b'
 	else return room.black?.uid === uid ? 'b' : 'w'
 }
@@ -40,7 +39,7 @@ export const getOtherByLongColour = (room: RoomSchema, colour: 'white' | 'black'
 	return getOther(room, player)
 }
 
-export const getOtherShortColour = (colour: keyof ShortToLong): keyof ShortToLong =>
+export const getOtherShortColour = (colour: keyof typeof shortToLong): keyof typeof shortToLong =>
 	colour === 'w' ? 'b' : 'w'
-export const getOtherLongColour = (colour: keyof LongToShort): keyof LongToShort =>
+export const getOtherLongColour = (colour: keyof typeof longToShort): keyof typeof longToShort =>
 	colour === 'white' ? 'black' : 'white'

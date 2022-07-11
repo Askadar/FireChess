@@ -1,60 +1,34 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import { User, signInAnonymously } from 'firebase/auth'
-import { authState } from 'rxfire/auth'
-import { untilUnmounted } from 'vuse-rx'
-
-import { auth } from '../firebase'
+import { defineComponent } from 'vue'
+import { useAuth } from './useAuth'
+import { Page } from '../Components'
 
 export default defineComponent({
-  setup() {
-    const user = ref<null | User>(null)
-
-    untilUnmounted(authState(auth)).subscribe((u) => {
-      user.value = u
-    })
-    signInAnonymously(auth)
-
-    return { user }
-  },
+	setup() {
+		const { user } = useAuth()
+		return { user }
+	},
+	components: { Page },
 })
-
 </script>
 
 <template>
-  <div>
-    <header class="py-3 mb-3 border-bottom bg-dark text-white">
-      <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-          <span class="d-flex align-items-center mb-2 me-2 mb-lg-0 text-white text-decoration-none fs-3">
-            <i class="fas fa-fire-alt"></i>
-          </span>
-          <ul class="nav col-12 col-sm-auto me-sm-auto mb-2 justify-content-center mb-md-0">
-            <span class="fs-4">Fire Chess</span>
-          </ul>
-
-        </div>
-      </div>
-    </header>
-
-    <div class="container-fluid" v-if="user">
-      <router-view :uid="user.uid" :username="user.displayName || 'Гость'" />
-    </div>
-  </div>
+	<page>
+		<router-view v-if="user" :uid="user.uid" :username="user.displayName || 'Гость'" />
+	</page>
 </template>
-
 
 <style>
 .signin {
-  display: flex;
-  align-items: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
+	display: flex;
+	align-items: center;
+	padding-top: 40px;
+	padding-bottom: 40px;
 }
 
 .form-signin {
-  width: 100%;
-  padding: 15px;
-  margin: auto;
+	width: 100%;
+	padding: 15px;
+	margin: auto;
 }
 </style>

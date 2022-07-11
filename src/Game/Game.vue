@@ -19,19 +19,21 @@ export default defineComponent({
 		const router = useRouter()
 
 		const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
-		const { _room, gameOver, restartGame, gameStatusLabel, myTimer, theirTimer } = useGame({ uid, roomId })
+		const { _room, gameOver, restartGame, gameStatusLabel, myTimer, theirTimer } = useGame({
+			uid,
+			roomId,
+		})
 
-		const refreshRoomTimer = () =>
-			updateRoom(roomId, { created: serverTimestamp() as Timestamp })
+		const refreshRoomTimer = () => updateRoom(roomId, { created: serverTimestamp() as Timestamp })
 
 		const { stop: stopRoomHeartbeat } = useInterval(refreshRoomTimer, 60e3)
 
-		let heartbeatSub: Subscription;
+		let heartbeatSub: Subscription
 		const stopHeartbeat = () => {
 			stopRoomHeartbeat()
 			heartbeatSub?.unsubscribe()
 		}
-		heartbeatSub = docData<RoomSchema>(getRoomRef(roomId)).subscribe(roomData => {
+		heartbeatSub = docData<RoomSchema>(getRoomRef(roomId)).subscribe((roomData) => {
 			if (roomData.players.length !== 2) return false
 
 			stopHeartbeat()
@@ -39,8 +41,7 @@ export default defineComponent({
 		onUnmounted(stopHeartbeat)
 
 		const leaveRoom = () => {
-			if (!_room.value)
-				return false
+			if (!_room.value) return false
 
 			if (_room.value.owner === uid) {
 				const extraClause =

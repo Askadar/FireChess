@@ -4,7 +4,7 @@ service cloud.firestore {
   	// Temp dev only rules
     match /{document=**} {
       allow read, write: if
-          request.time < timestamp.date(2022, 6, 29);
+          request.time < timestamp.date(2022, 7, 29);
     }
 
     // Real rules

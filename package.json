@@ -15,6 +15,7 @@
 		"@chrisoakman/chessboardjs": "^1.0.0",
 		"chess.js": "^0.11.0",
 		"firebase": "^9.8.2",
+		"normalize.css": "^8.0.1",
 		"rxfire": "^6.0.3",
 		"rxjs": "^6.6.7",
 		"vue": "^3.2.31",

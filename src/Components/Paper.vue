@@ -33,8 +33,7 @@
 
 	&>&-header
 		typography-header-2()
-
-		color colour-secondary
+		margin 0
 
 	&>&-actions
 		display flex

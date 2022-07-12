@@ -46,6 +46,8 @@ export default defineComponent({
 </script>
 
 <style lang="stylus">
+@import '../style.styl'
+
 .radio-fields
 	display: flex;
 	flex-direction: row;
@@ -59,7 +61,7 @@ export default defineComponent({
 		width: 12px;
 		height: 12px;
 		border-radius: 100%;
-		background: white;
+		background: colour-primary;
 		display: inline-block;
 		position: relative;
 		box-shadow: inset 0 0 2px 0px rgb(0 0 0 / 25%)
@@ -76,6 +78,6 @@ export default defineComponent({
 			border-radius: 100%;
 
 	&--active &__dot:after
-		background: red;
-		box-shadow: 0 0 1px colour-primary;
+		background: colour-accent;
+		box-shadow: 0 0 1px colour-accent;
 </style>

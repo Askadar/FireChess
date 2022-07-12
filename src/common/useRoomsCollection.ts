@@ -132,8 +132,9 @@ export const useRoomsCollection = (
 			if (uid === room.owner || room.players.some((p) => p === uid))
 				sendInfo(`Вы уже находитесь в комнате`)
 
+			const joinAsColour = room.white ? 'black' : 'white'
 			updateRoom(doc, {
-				black: { uid: uid, name: username },
+				[joinAsColour]: { uid: uid, name: username },
 				players: arrayUnion(uid) as unknown as string[],
 				gameStatus: room.players.length === 1 ? 'in progress' : room.gameStatus,
 			})

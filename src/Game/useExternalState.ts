@@ -1,8 +1,7 @@
 import { docData } from 'rxfire/firestore'
 import { reactive } from 'vue'
-import { untilUnmounted } from 'vuse-rx/src'
 
-import { RoomSchema, useRoomsCollection } from '../common'
+import { RoomSchema, useMountedSubscription, useRoomsCollection } from '../common'
 
 export interface ExternalState {
 	gameOver: boolean
@@ -34,7 +33,7 @@ export const useExternalState = (props: { uid: string; username: string; roomId:
 		}
 	}
 
-	untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
+	useMountedSubscription(docData<RoomSchema>(getRoomRef(roomId)), onRoomDataUpdate)
 
 	return { externalState, resetExternalState }
 }

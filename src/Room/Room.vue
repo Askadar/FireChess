@@ -2,25 +2,20 @@
 	<paper>
 		<template #header>Открытые комнаты</template>
 		<template #default v-if="rooms.length > 0">
-			<button
+			<z-button
 				v-for="room in rooms"
-				type="button"
-				class="list-group-item list-group-item-action"
 				@click="() => playInRoom(room.id)"
 				:key="room.id"
 			>
 				{{ generateRoomLabel(room) }}
-				<button
+				<z-button
 					v-if="room.owner == uid"
-					type="button"
-					class="btn btn-danger btn-sm float-end"
-					data-bs-placement="right"
 					title="Delete Room"
 					@click.stop="() => deleteRoom(room.id)"
 				>
 					<i class="fas fa-trash-alt"></i>
-				</button>
-			</button>
+				</z-button>
+			</z-button>
 		</template>
 		<template #default v-else>
 			Сейчас нет ожидающих игр куда можно присоединиться, создайте свою
@@ -31,11 +26,11 @@
 		<template #default>
 			<z-input>
 				<template #label> Продолжительность игры </template>
-				<select-field v-model="ruleset" :options="rulesetOptions" />
+				<select-field v-model="selectedRuleset" :options="rulesetOptions" />
 			</z-input>
 		</template>
 		<template #actions>
-			<button @click="createRoom">Создать комнату</button>
+			<z-button @click="createRoom" variant="primary">Создать комнату</z-button>
 		</template>
 	</paper>
 </template>
@@ -49,7 +44,7 @@ import {
 	useRulesetsCollection,
 } from '../common'
 import { RulesetOption } from '../common/useRulesetsCollection'
-import { Paper, ZInput } from '../Components'
+import { Paper, ZInput, ZButton } from '../Components'
 import SelectField from '../Components/ZInput/SelectField.vue'
 
 export default defineComponent({
@@ -65,14 +60,14 @@ export default defineComponent({
 		const { moveToRoom } = useRoomRouter()
 		const { sendWarning } = useNotification()
 
-		const ruleset = ref<RulesetOption>()
+		const selectedRuleset = ref<RulesetOption>()
 		const { rulesetOptions } = useRulesetsCollection()
 
 		const createRoom = async () => {
-			if (!ruleset.value)
+			if (!selectedRuleset.value)
 				return sendWarning(`Для создания комнаты нужно выбрать набор правил для игры`)
 
-			const duration = ruleset.value.ruleset.duration
+			const duration = selectedRuleset.value.ruleset.duration
 
 			const newRoom = await _createRoom({ duration, playAs: 'white' })
 			if (newRoom) moveToRoom(newRoom.id)
@@ -91,9 +86,9 @@ export default defineComponent({
 			deleteRoom,
 
 			rulesetOptions,
-			ruleset,
+			selectedRuleset,
 		}
 	},
-	components: { Paper, ZInput, SelectField },
+	components: { Paper, ZInput, ZButton, SelectField },
 })
 </script>

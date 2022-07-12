@@ -17,12 +17,12 @@ import {
 } from 'firebase/firestore'
 import { collectionData } from 'rxfire/firestore'
 import { startWith } from 'rxjs/operators'
-import { refFrom } from 'vuse-rx'
 
 import { db } from '../firebase'
 
 import { cleanBoard } from './constants'
 import { useNotification } from './useNotification'
+import { useObservable } from './useObservable'
 import { useTypedCollection } from './useTypedCollection'
 
 export type PlayerSchema = { uid: string; name: string }
@@ -58,7 +58,7 @@ export const useRoomsCollection = (
 		where('created', '>', Timestamp.fromDate(new Date(Date.now() - 90e3))),
 		orderBy('created', 'asc')
 	)
-	const rooms = refFrom(
+	const rooms = useObservable(
 		collectionData<RoomSchema>(filteredRooms, { idField: 'id' }).pipe(
 			startWith([] as RoomSchema[])
 		),

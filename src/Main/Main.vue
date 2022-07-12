@@ -1,3 +1,9 @@
+<template>
+	<page>
+		<router-view v-if="user" :uid="user.uid" :username="user.displayName || 'Гость'" />
+	</page>
+</template>
+
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { useAuth } from './useAuth'
@@ -11,12 +17,6 @@ export default defineComponent({
 	components: { Page },
 })
 </script>
-
-<template>
-	<page>
-		<router-view v-if="user" :uid="user.uid" :username="user.displayName || 'Гость'" />
-	</page>
-</template>
 
 <style>
 .signin {

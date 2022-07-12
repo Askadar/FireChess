@@ -1,28 +1,62 @@
 <template>
-	<label class="input">
-		<span v-if="$slots.label" class="input-label">
+	<label class="input" :for="labelName">
+		<span class="input-label" v-if="$slots.label">
 			<slot name="label">Input Label</slot>
 		</span>
 
-		<slot></slot>
+		<div class="input-field"><slot></slot></div>
 	</label>
 </template>
 
+<script lang="ts">
+import { useAttrs, defineComponent, provide } from 'vue'
+
+export default defineComponent({
+	setup(_, context) {
+		const labelName = (context.attrs.name as string) || `input-${Math.random()}`
+		provide('labelName', labelName)
+
+		return { labelName }
+	}
+})
+</script>
+
 <style lang="stylus">
+@import '../style.styl'
+
 .input
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	padding: 4px 6px;
-	gap: 3px;
+	padding: 6px 9px;
+	gap: 6px;
 
-	min-width: 200px
+	min-width: 300px
 	width: auto;
-	height: 35px;
-
-	/* Primary */
+	height: 42px;
 
 	background: colour-white;
 	box-shadow: inset 0px 0px 1px rgba(0, 0, 0, 0.25);
 	border-radius: 2px;
+	outline 1px solid colour-secondary
+	cursor pointer
+
+	& > &-label
+		typography-label()
+
+	&:focus-within
+		outline-width 2px
+
+	& > &-field
+		typography-input()
+
+		input
+		select
+			cursor inherit
+			border 0
+			padding 0
+			appearance none
+
+			&:focus
+				outline none
 </style>

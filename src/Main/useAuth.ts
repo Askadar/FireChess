@@ -1,16 +1,12 @@
-import { ref } from 'vue'
 import { User, signInAnonymously } from 'firebase/auth'
 import { authState } from 'rxfire/auth'
-import { untilUnmounted } from 'vuse-rx'
 
 import { auth } from '../firebase'
+import { useObservable } from '../common'
 
 export const useAuth = () => {
-	const user = ref<null | User>(null)
+	const user = useObservable<null | User>(authState(auth))
 
-	untilUnmounted(authState(auth)).subscribe((u) => {
-		user.value = u
-	})
 	signInAnonymously(auth)
 
 	return { user }

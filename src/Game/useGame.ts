@@ -2,9 +2,15 @@ import { deleteField } from '@firebase/firestore'
 import { Subscription } from 'rxjs'
 import { docData } from 'rxfire/firestore'
 import { ref, watch, computed } from 'vue'
-import { untilUnmounted } from 'vuse-rx/src'
 
-import { RoomSchema, useEvent, useRoomsCollection, Timing, cleanBoard } from '../common'
+import {
+	RoomSchema,
+	useEvent,
+	useRoomsCollection,
+	Timing,
+	cleanBoard,
+	useMountedSubscription,
+} from '../common'
 import { getByShortColour } from '../helpers'
 
 import { useBoard } from './useBoard'
@@ -150,8 +156,8 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 		prevTurn.value = turn.value
 	}
 
-	untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomDataUpdate)
-	roomMetaSub = untilUnmounted(docData<RoomSchema>(getRoomRef(roomId))).subscribe(onRoomMetaUpdate)
+	useMountedSubscription(docData<RoomSchema>(getRoomRef(roomId)), onRoomDataUpdate)
+	roomMetaSub = useMountedSubscription(docData<RoomSchema>(getRoomRef(roomId)), onRoomMetaUpdate)
 
 	return {
 		_room: room,

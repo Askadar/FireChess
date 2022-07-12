@@ -7872,11 +7872,6 @@ vue@^3.2.31:
     "@vue/server-renderer" "3.2.31"
     "@vue/shared" "3.2.31"
 
-vuse-rx@^0.13.1:
-  version "0.13.1"
-  resolved "https://registry.yarnpkg.com/vuse-rx/-/vuse-rx-0.13.1.tgz#6875ac29112711abde0ebcb7ffb9c1dd40faa3bb"
-  integrity sha512-Jg0BjqUObKTIrm8HmGmyj/h5tEb5UxVvp5wqVZu2GviUAsSDyMrV2nWZsJ5z/1cjNRmm9KkZH+eJNQS8ihLEUg==
-
 walker@^1.0.7:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/walker/-/walker-1.0.8.tgz#bd498db477afe573dc04185f011d3ab8a8d7653f"

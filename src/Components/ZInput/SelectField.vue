@@ -1,10 +1,12 @@
 <template>
-	<select class="select-field" @change="change" :id="labelName">
-		<option>Выберите один из вариантов ниже</option>
-		<option v-for="{ label, value } in options" :value="value">
-			{{ label }}
-		</option>
-	</select>
+	<div class="select-field-wrap">
+		<select class="select-field" @change="change" :id="labelName">
+			<option>Выберите один из вариантов ниже</option>
+			<option v-for="{ label, value } in options" :value="value">
+				{{ label }}
+			</option>
+		</select>
+	</div>
 </template>
 
 <script lang="ts">
@@ -14,7 +16,6 @@ import { Option } from "./common";
 export default defineComponent({
 	inject: { labelName: 'labelName'},
 	props: {
-		labelName: String,
 		modelValue: Object as PropType<Option>,
 		options: { type: Array<Option>, default: [] }
 	},
@@ -36,7 +37,7 @@ export default defineComponent({
 </script>
 
 <style lang="stylus">
-.input-field
+.select-field-wrap
 	position relative
 
 	&:after

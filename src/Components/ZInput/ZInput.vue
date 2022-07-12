@@ -38,14 +38,19 @@ export default defineComponent({
 	background: colour-white;
 	box-shadow: inset 0px 0px 1px rgba(0, 0, 0, 0.25);
 	border-radius: 2px;
-	outline 1px solid colour-secondary
+	border 1px solid colour-secondary
+	border-top-width: 0px // for stacked inputs
 	cursor pointer
+
+	&:first-child
+		border-top-width: 1px
 
 	& > &-label
 		typography-label()
 
 	&:focus-within
-		outline-width 2px
+	&:hover
+		outline 1px solid colour-secondary
 
 	& > &-field
 		typography-input()

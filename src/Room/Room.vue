@@ -2,11 +2,7 @@
 	<paper>
 		<template #header>Открытые комнаты</template>
 		<template #default v-if="rooms.length > 0">
-			<z-button
-				v-for="room in rooms"
-				@click="() => playInRoom(room.id)"
-				:key="room.id"
-			>
+			<z-button v-for="room in rooms" @click="() => playInRoom(room.id)" :key="room.id">
 				{{ generateRoomLabel(room) }}
 				<z-button
 					v-if="room.owner == uid"
@@ -25,7 +21,11 @@
 		<template #header>Создать комнату</template>
 		<template #default>
 			<z-input>
-				<template #label> Продолжительность игры </template>
+				<template #label>Начать игру</template>
+				<radio-field v-model="playAs" :options="startingColours" />
+			</z-input>
+			<z-input>
+				<template #label>Продолжительность игры</template>
 				<select-field v-model="selectedRuleset" :options="rulesetOptions" />
 			</z-input>
 		</template>
@@ -44,8 +44,7 @@ import {
 	useRulesetsCollection,
 } from '../common'
 import { RulesetOption } from '../common/useRulesetsCollection'
-import { Paper, ZInput, ZButton } from '../Components'
-import SelectField from '../Components/ZInput/SelectField.vue'
+import { Paper, ZInput, ZButton, SelectField, RadioField } from '../Components'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true }, username: { type: String, required: true } },
@@ -62,6 +61,11 @@ export default defineComponent({
 
 		const selectedRuleset = ref<RulesetOption>()
 		const { rulesetOptions } = useRulesetsCollection()
+		const startingColours = [
+			{ value: 'white', label: 'Белыми' } as const,
+			{ value: 'black', label: 'Черными' } as const,
+		]
+		const playAs = ref<typeof startingColours[number]>(startingColours[0])
 
 		const createRoom = async () => {
 			if (!selectedRuleset.value)
@@ -69,7 +73,7 @@ export default defineComponent({
 
 			const duration = selectedRuleset.value.ruleset.duration
 
-			const newRoom = await _createRoom({ duration, playAs: 'white' })
+			const newRoom = await _createRoom({ duration, playAs: playAs.value.value })
 			if (newRoom) moveToRoom(newRoom.id)
 		}
 
@@ -87,8 +91,10 @@ export default defineComponent({
 
 			rulesetOptions,
 			selectedRuleset,
+			playAs,
+			startingColours,
 		}
 	},
-	components: { Paper, ZInput, ZButton, SelectField },
+	components: { Paper, ZInput, ZButton, SelectField, RadioField },
 })
 </script>

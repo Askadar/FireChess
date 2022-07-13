@@ -1,14 +1,32 @@
+<template>
+	<div :id="`myBoard-${roomId}`" style="width: 50%"></div>
+	<paper>
+		<template #header>Ход игры</template>
+		<template #default>
+			<p>{{ gameStatusLabel }}</p>
+			<p>{{ myTimeFormatted }} | {{ theirTimeFormatted }}</p>
+		</template>
+		<template #actions>
+			<z-button v-if="gameOver" variant="secondary" @click="restartGame">
+				<i class="fas fa-sync-alt me-2"></i>Reset Board
+			</z-button>
+			<z-button variant="tretiary" @click="leaveRoom">Вернуться в лобби</z-button>
+		</template>
+	</paper>
+</template>
+
 <script lang="ts">
 import { computed, defineComponent, onUnmounted } from 'vue'
-import { serverTimestamp, Timestamp } from 'firebase/firestore'
+import { deleteField, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { docData } from 'rxfire/firestore'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useRoomsCollection, RoomSchema } from '../common'
+import { Paper, ZButton } from '../Components'
 import { useInterval } from '../common/useInterval'
+import { formatGameTime } from '../helpers'
 import { useGame } from './useGame'
 import { Subscription } from 'rxjs'
-import { formatGameTime } from '../helpers/time'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true } },
@@ -55,7 +73,7 @@ export default defineComponent({
 
 				updateRoom(roomId, {
 					gameStatus: gameOver.value === true ? 'finished' : 'forfeited',
-					lost: gameOver.value === true && !_room.value.lost ? uid : _room.value.lost || undefined,
+					lost: gameOver.value === true && !_room.value.lost ? uid : _room.value.lost || deleteField() as unknown as undefined,
 				})
 			} else if (_room.value.players.some((p) => p === uid) && !gameOver.value) {
 				const acceptLeaveRoom = confirm(
@@ -81,37 +99,9 @@ export default defineComponent({
 			theirTimeFormatted,
 		}
 	},
+	components: { Paper, ZButton },
 })
 </script>
-
-<template>
-	<div class="row">
-		<div class="col-md-6 offset-md-2 mb-3">
-			<div :id="`myBoard-${roomId}`" style="width: 80%"></div>
-		</div>
-		<div class="col-md-3">
-			<div class="card mb-3">
-				<div class="card-header">
-					<button type="button" class="btn btn-outline-dark" @click="leaveRoom">
-						Вернуться в лобби
-					</button>
-				</div>
-			</div>
-			<div class="card mb-3">
-				<div class="card-header">Ход игры</div>
-				<div class="card-body">
-					<p class="card-text">
-						Мое время: {{ myTimeFormatted }} | Время противника: {{ theirTimeFormatted }}
-					</p>
-					<p class="card-text">{{ gameStatusLabel }}</p>
-					<button v-if="gameOver" type="button" class="btn btn-outline-dark" @click="restartGame">
-						<i class="fas fa-sync-alt me-2"></i>Reset Board
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</template>
 
 <style lang="stylus">
 .square-55d63:after

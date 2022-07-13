@@ -41,6 +41,7 @@ export const useChess = (props: {
 		const draw = chess.value.in_draw()
 
 		let winnerColour: 'black' | 'white' | null = null
+		let loserColour: 'black' | 'white' | null = null
 		let winnerPlayer: string | null = null
 		let loserPlayer: string | null = null
 
@@ -55,7 +56,7 @@ export const useChess = (props: {
 
 			winnerPlayer = getByLongColour(room.value, winnerColour)?.uid || null
 
-			const loserColour = getOtherLongColour(winnerColour)
+			loserColour = getOtherLongColour(winnerColour)
 			loserPlayer = getByLongColour(room.value, loserColour)?.uid || null
 		}
 

@@ -11,3 +11,5 @@ export {
 	getOtherShortColour,
 	getOtherLongColour,
 } from './playersHandle'
+
+export { formatGameTime } from './time'

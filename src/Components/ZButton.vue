@@ -9,7 +9,10 @@ import { defineComponent, PropType } from 'vue'
 
 export default defineComponent({
 	props: {
-		variant: { type: String as PropType<'primary' | 'secondary' | 'tretiary'>, default: 'tretiary' },
+		variant: {
+			type: String as PropType<'primary' | 'secondary' | 'tretiary'>,
+			default: 'tretiary',
+		},
 	},
 })
 </script>
@@ -32,7 +35,7 @@ export default defineComponent({
 	min-width 160px
 
 	border-radius: 24px;
-	border 1px solid transparent
+	border 2px solid transparent
 
 	font-family: 'Montserrat';
 	font-style: normal;
@@ -49,6 +52,6 @@ export default defineComponent({
 		background colour-secondary
 
 	&-tretiary
-		border-colour colour-secondary-2;
-		color secondary-1
+		border-color colour-secondary-1;
+		color colour-secondary
 </style>

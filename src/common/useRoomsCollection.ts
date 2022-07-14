@@ -23,6 +23,7 @@ import { db } from '../firebase'
 import { cleanBoard } from './constants'
 import { useNotification } from './useNotification'
 import { useObservable } from './useObservable'
+import { RulesetSchema } from './useRulesetsCollection'
 import { useTypedCollection } from './useTypedCollection'
 
 export type PlayerSchema = { uid: string; name: string }
@@ -36,7 +37,7 @@ export interface RoomSchema {
 	black?: PlayerSchema
 	timing?: Timing
 	lost?: string
-	duration: number
+	ruleset: RulesetSchema
 	gameBoard: string
 	gameStatus: 'waiting' | 'in progress' | 'finished' | 'forfeited' | 'timeout'
 	created: Timestamp
@@ -65,7 +66,7 @@ export const useRoomsCollection = (
 		[]
 	)
 
-	const createRoom = async (roomParams: { duration: number; playAs: 'white' | 'black' }) => {
+	const createRoom = async (roomParams: { ruleset: RulesetSchema; playAs: 'white' | 'black' }) => {
 		if (rooms.value.filter((room) => room.owner === uid).length >= roomLimit) {
 			sendWarning(
 				`Вы уже создали больше ${roomLimit} комнат, закройте некоторые прежде чем создавать новые`
@@ -73,7 +74,7 @@ export const useRoomsCollection = (
 			return false
 		}
 
-		const { duration, playAs } = roomParams
+		const { ruleset, playAs } = roomParams
 		const playerObject = { uid: uid, name: username || 'guest' }
 		return addDoc(roomsCollection, {
 			id: '',
@@ -82,7 +83,7 @@ export const useRoomsCollection = (
 			[playAs]: playerObject,
 			gameBoard: cleanBoard,
 			gameStatus: 'waiting',
-			duration: duration * 60, // label minutes -> logic seconds
+			ruleset,
 			created: serverTimestamp(),
 		})
 	}

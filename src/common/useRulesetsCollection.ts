@@ -11,11 +11,18 @@ import { useTypedCollection } from './useTypedCollection'
 export interface RulesetSchema {
 	id: string
 	duration: number
-	label: string
+	extraTime: number
+	type: 'rapid' | 'bullet' | 'classic'
 }
 
 export interface RulesetOption extends Option {
 	ruleset: RulesetSchema
+}
+
+const i18nTypeHash = {
+	rapid: 'Рапид',
+	bullet: 'Пуля',
+	classic: 'Классика',
 }
 
 export const useRulesetsCollection = () => {
@@ -30,7 +37,13 @@ export const useRulesetsCollection = () => {
 	const pipedRulesets = rulesetsData.pipe(
 		switchMap((rulesets) =>
 			from(rulesets).pipe(
-				map((ruleset) => ({ label: ruleset.label, value: ruleset.id, ruleset })),
+				map((ruleset) => ({
+					label: `${ruleset.duration}|${ruleset.extraTime || 0} ${
+						i18nTypeHash[ruleset.type] || ''
+					}`.trim(),
+					value: ruleset.id,
+					ruleset,
+				})),
 				toArray()
 			)
 		)

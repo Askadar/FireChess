@@ -72,15 +72,15 @@ export default defineComponent({
 			if (!selectedRuleset.value)
 				return sendWarning(`Для создания комнаты нужно выбрать набор правил для игры`)
 
-			const duration = selectedRuleset.value.ruleset.duration
+			const ruleset = selectedRuleset.value.ruleset
 
-			const newRoom = await _createRoom({ duration, playAs: playAs.value.value })
-			if (newRoom) moveToRoom(newRoom.id, duration)
+			const newRoom = await _createRoom({ ruleset, playAs: playAs.value.value })
+			if (newRoom) moveToRoom(newRoom.id, ruleset)
 		}
 
 		const playInRoom = (room: RoomSchema) => {
 			joinRoom(room.id)
-			moveToRoom(room.id, room.duration)
+			moveToRoom(room.id, room.ruleset)
 		}
 
 		return {

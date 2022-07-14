@@ -1,5 +1,5 @@
 <template>
-	<div :id="`myBoard-${roomId}`" style="width: 50%"></div>
+	<div :id="`myBoard-${roomId}`" class="game__board"></div>
 	<paper>
 		<template #header>Ход игры</template>
 		<template #default>
@@ -7,9 +7,7 @@
 			<p>{{ myTimeFormatted }} | {{ theirTimeFormatted }}</p>
 		</template>
 		<template #actions>
-			<z-button v-if="gameOver" variant="secondary" @click="restartGame">
-				<i class="fas fa-sync-alt me-2"></i>Reset Board
-			</z-button>
+			<!-- <z-button v-if="gameOver" variant="secondary" @click="restartGame">Переиграть</z-button> -->
 			<z-button variant="tretiary" @click="leaveRoom">Вернуться в лобби</z-button>
 		</template>
 	</paper>
@@ -36,10 +34,12 @@ export default defineComponent({
 		const roomId = params.roomId as string
 		const router = useRouter()
 
+		const gameDuration = (parseInt(router.currentRoute.value.query.duration as string) || 5) * 60
 		const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
-		const { _room, gameOver, restartGame, gameStatusLabel, myTimer, theirTimer } = useGame({
+		const { _room, gameOver, gameStatusLabel, myTimer, theirTimer } = useGame({
 			uid,
 			roomId,
+			gameDuration,
 		})
 
 		const refreshRoomTimer = () => updateRoom(roomId, { created: serverTimestamp() as Timestamp })
@@ -73,7 +73,10 @@ export default defineComponent({
 
 				updateRoom(roomId, {
 					gameStatus: gameOver.value === true ? 'finished' : 'forfeited',
-					lost: gameOver.value === true && !_room.value.lost ? uid : _room.value.lost || deleteField() as unknown as undefined,
+					lost:
+						gameOver.value === true && !_room.value.lost
+							? uid
+							: _room.value.lost || (deleteField() as unknown as undefined),
 				})
 			} else if (_room.value.players.some((p) => p === uid) && !gameOver.value) {
 				const acceptLeaveRoom = confirm(
@@ -93,7 +96,6 @@ export default defineComponent({
 			roomId,
 			gameOver,
 			leaveRoom,
-			restartGame,
 			gameStatusLabel,
 			myTimeFormatted,
 			theirTimeFormatted,
@@ -104,6 +106,13 @@ export default defineComponent({
 </script>
 
 <style lang="stylus">
+.game__board
+	width 100%
+
+	@media screen and (min-width 768px)
+		width 50%
+		max-height calc(100vh - 240px)
+
 .square-55d63:after
 	content ""
 	transition: box-shadow 0.1s ease-in

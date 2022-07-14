@@ -18,12 +18,11 @@ import { useChess } from './useChess'
 import { useGameTimer } from './useGameTimer'
 import { useExternalState } from './useExternalState'
 
-export const useGame = (props: { uid: string; roomId: string }) => {
-	const { uid, roomId } = props
+export const useGame = (props: { uid: string; roomId: string, gameDuration: number }) => {
+	const { uid, roomId, gameDuration } = props
 
 	// TODO extract into rule settings
 	const gameTime = 20
-	const gameDuration = 300
 
 	const playingAs = ref<'w' | 'b'>('w')
 	const matchStart = ref(false)
@@ -128,8 +127,8 @@ export const useGame = (props: { uid: string; roomId: string }) => {
 			startGameTimer(prevTurn.value === playingAs.value)
 		}
 
-		if (roomMeta.timing)
-			compensateTimer({ remoteDelayCompensation: roomMeta.timing, playingAs: playingAs.value })
+		// if (roomMeta.timing)
+		// 	compensateTimer({ remoteDelayCompensation: roomMeta.timing, playingAs: playingAs.value })
 
 		if (matchStart.value) roomMetaSub?.unsubscribe()
 	}

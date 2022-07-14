@@ -2,7 +2,7 @@
 	<paper>
 		<template #header>Открытые комнаты</template>
 		<template #default v-if="rooms.length > 0">
-			<z-button v-for="room in rooms" @click="() => playInRoom(room.id)" :key="room.id">
+			<z-button v-for="room in rooms" @click="() => playInRoom(room)" :key="room.id">
 				{{ generateRoomLabel(room) }}
 				<z-button
 					v-if="room.owner == uid"
@@ -38,6 +38,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 import {
+	RoomSchema,
 	useNotification,
 	useRoomRouter,
 	useRoomsCollection,
@@ -74,12 +75,12 @@ export default defineComponent({
 			const duration = selectedRuleset.value.ruleset.duration
 
 			const newRoom = await _createRoom({ duration, playAs: playAs.value.value })
-			if (newRoom) moveToRoom(newRoom.id)
+			if (newRoom) moveToRoom(newRoom.id, duration)
 		}
 
-		const playInRoom = (roomId: string) => {
-			joinRoom(roomId)
-			moveToRoom(roomId)
+		const playInRoom = (room: RoomSchema) => {
+			joinRoom(room.id)
+			moveToRoom(room.id, room.duration)
 		}
 
 		return {

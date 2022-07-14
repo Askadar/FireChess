@@ -9,10 +9,20 @@
 
 .page
 	display: flex;
-	flex-direction: row;
 	align-items: flex-start;
-	padding: 120px 180px;
-	gap: 42px;
+
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px 6px;
+
+	@media screen
+		@media (min-width 480px)
+			padding: 30px 40px;
+			flex-direction: row;
+
+		@media (min-width 768px)
+			padding: 120px 180px;
+			gap: 42px;
 
 	position: relative;
 	box-sizing: border-box;

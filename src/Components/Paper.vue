@@ -16,6 +16,7 @@
 @import './style'
 
 .paper
+	box-sizing border-box
 	display flex
 	flex-direction column
 	align-items flex-start
@@ -24,6 +25,10 @@
 	background colour-primary
 	box-shadow 1px 1px 8px rgba(0, 0, 0, .25)
 	border-radius 8px
+	width 100%
+
+	@media screen and (min-width: 768px)
+		width auto
 
 	&>&-item
 		flex none

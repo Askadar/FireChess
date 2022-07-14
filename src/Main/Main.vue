@@ -18,17 +18,10 @@ export default defineComponent({
 })
 </script>
 
-<style>
-.signin {
-	display: flex;
-	align-items: center;
-	padding-top: 40px;
-	padding-bottom: 40px;
-}
+<style lang="stylus">
+@import '../Components/style.styl'
 
-.form-signin {
-	width: 100%;
-	padding: 15px;
-	margin: auto;
-}
+html
+body
+	typography-body()
 </style>

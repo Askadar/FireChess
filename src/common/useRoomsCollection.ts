@@ -112,17 +112,6 @@ export const useRoomsCollection = (
 			created: serverTimestamp() as unknown as Timestamp,
 		})
 
-	const generateRoomLabel = (room: RoomSchema) => {
-		switch (room.players.length) {
-			case 0:
-				return `Пустая комната`
-			case 1:
-				return `Комната с гостем`
-			case 2:
-				return `Играют`
-		}
-	}
-
 	const joinRoom = async (id: string) => {
 		try {
 			const doc = await getRoom(id)
@@ -170,7 +159,6 @@ export const useRoomsCollection = (
 		query: filteredRooms,
 		_collection: roomsCollection,
 		rooms,
-		generateRoomLabel,
 		createRoom,
 		getRoom,
 		getRoomRef,

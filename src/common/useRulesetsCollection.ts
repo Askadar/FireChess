@@ -19,7 +19,8 @@ export interface RulesetOption extends Option {
 	ruleset: RulesetSchema
 }
 
-const i18nTypeHash = {
+// Temp, remove after proper i18n implementation
+export const i18nTypeHash = {
 	rapid: 'Рапид',
 	bullet: 'Пуля',
 	classic: 'Классика',

@@ -2,16 +2,15 @@
 	<paper>
 		<template #header>Открытые комнаты</template>
 		<template #default v-if="rooms.length > 0">
-			<z-button v-for="room in rooms" @click="() => playInRoom(room)" :key="room.id">
-				{{ generateRoomLabel(room) }}
-				<z-button
-					v-if="room.owner == uid"
-					title="Delete Room"
-					@click.stop="() => deleteRoom(room.id)"
-				>
-					<i class="fas fa-trash-alt"></i>
-				</z-button>
-			</z-button>
+			<room-item
+				v-for="room in rooms"
+				v-bind="room.ruleset"
+				:room="room"
+				:uid="uid"
+				:key="room.id"
+				@join-room="playInRoom"
+				@delete-room="deleteRoom"
+			/>
 		</template>
 		<template #default v-else>
 			Сейчас нет ожидающих игр куда можно присоединиться, создайте свою
@@ -46,17 +45,12 @@ import {
 } from '../common'
 import { RulesetOption } from '../common/useRulesetsCollection'
 import { Paper, ZInput, ZButton, SelectField, RadioField } from '../Components'
+import { default as RoomItem } from './RoomItem.vue'
 
 export default defineComponent({
 	props: { uid: { type: String, required: true }, username: { type: String, required: true } },
 	setup(props) {
-		const {
-			rooms,
-			generateRoomLabel,
-			createRoom: _createRoom,
-			deleteRoom,
-			joinRoom,
-		} = useRoomsCollection(props)
+		const { rooms, createRoom: _createRoom, deleteRoom, joinRoom } = useRoomsCollection(props)
 		const { moveToRoom } = useRoomRouter()
 		const { sendWarning } = useNotification()
 
@@ -85,7 +79,6 @@ export default defineComponent({
 
 		return {
 			rooms,
-			generateRoomLabel,
 			createRoom,
 			playInRoom,
 			deleteRoom,
@@ -96,6 +89,6 @@ export default defineComponent({
 			startingColours,
 		}
 	},
-	components: { Paper, ZInput, ZButton, SelectField, RadioField },
+	components: { RoomItem, Paper, ZInput, ZButton, SelectField, RadioField },
 })
 </script>

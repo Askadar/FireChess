@@ -2,10 +2,10 @@ import { collection, query } from 'firebase/firestore'
 import { collectionData } from 'rxfire/firestore'
 import { from } from 'rxjs'
 import { map, startWith, switchMap, toArray } from 'rxjs/operators'
-import { Option } from '../Components/ZInput/common'
+import { Option } from '../../Components/'
 
-import { db } from '../firebase'
-import { useObservable } from './useObservable'
+import { db } from '../../firebase'
+import { useObservable } from '../rx'
 import { useTypedCollection } from './useTypedCollection'
 
 export interface RulesetSchema {

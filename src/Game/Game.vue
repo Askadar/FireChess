@@ -21,7 +21,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { useRoomsCollection, RoomSchema } from '../common'
 import { Paper, ZButton } from '../Components'
-import { useInterval } from '../common/useInterval'
+import { useInterval } from '../common/'
 import { formatGameTime } from '../helpers'
 import { useGame } from './useGame'
 import { Subscription } from 'rxjs'

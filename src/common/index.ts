@@ -1,13 +1,9 @@
-export { useRoomRouter } from './useRoomRouter'
-export { useRoomsCollection } from './useRoomsCollection'
-export { useRulesetsCollection } from './useRulesetsCollection'
-export { useTypedCollection } from './useTypedCollection'
-export { useObservable } from './useObservable'
-export { useMountedSubscription } from './useMountedSubscription'
-export { useNotification } from './useNotification'
-export { useTimer, TimerState } from './useTimer'
-export { useEvent } from './useEvent'
+export { useRoomRouter, useNotification, useEvent } from './misc'
+export { useRoomsCollection, useRulesetsCollection, useTypedCollection } from './collections'
+export { useObservable, useMountedSubscription } from './rx'
+export { useTimer, useInterval } from './timing'
+
+export type { TimerState } from './timing'
+export type { Timing, RoomSchema, RulesetOption, RulesetSchema } from './collections'
 
 export { cleanBoard } from './constants'
-
-export type { Timing, RoomSchema } from './useRoomsCollection'

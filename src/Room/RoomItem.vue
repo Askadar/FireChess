@@ -60,4 +60,8 @@ export default defineComponent({
 
 	color initial
 	text-decoration: none
+
+	& > &__piece
+		&:last-child
+			margin-left auto
 </style>

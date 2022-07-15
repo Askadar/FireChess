@@ -32,6 +32,13 @@
 			<z-button @click="createRoom" variant="primary">Создать комнату</z-button>
 		</template>
 	</paper>
+	<paper>
+		<template #header>Играйте в шахматы онлайн!</template>
+		<template #default>
+			Чтобы начать игру онлайн достаточно присоединиться к открытой комнате где Вас уже ждет
+			соперник, или создать новую с понравившимся типом матча, будь то Блиц, Рапид или Пуля.
+		</template>
+	</paper>
 </template>
 
 <script lang="ts">

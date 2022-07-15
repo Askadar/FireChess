@@ -55,4 +55,6 @@ export default defineComponent({
 
 	& > .select-field.select-field
 		padding-right 18px
+		width 100%
+		text-overflow ellipsis
 </style>

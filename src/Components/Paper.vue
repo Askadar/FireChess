@@ -26,13 +26,13 @@
 	box-shadow 1px 1px 8px rgba(0, 0, 0, .25)
 	border-radius 8px
 	width 100%
+	flex 1 1 100%
 
 	@media screen and (min-width: 768px)
-		width auto
+		flex-basis 30%
 
 	&>&-item
 		flex none
-		order 1
 		flex-grow 0
 		align-self stretch
 

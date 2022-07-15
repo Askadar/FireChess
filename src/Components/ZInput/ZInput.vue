@@ -31,7 +31,7 @@ export default defineComponent({
 	padding: 6px 9px;
 	gap: 6px;
 
-	min-width: 300px
+	min-width: 205px
 	width: auto;
 	height: 42px;
 
@@ -53,6 +53,7 @@ export default defineComponent({
 		outline 1px solid colour-secondary
 
 	& > &-field
+		width 100%
 		typography-input()
 
 		input

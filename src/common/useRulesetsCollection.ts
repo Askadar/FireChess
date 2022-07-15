@@ -23,6 +23,7 @@ export interface RulesetOption extends Option {
 export const i18nTypeHash = {
 	rapid: 'Рапид',
 	bullet: 'Пуля',
+	blitz: 'Блиц',
 	classic: 'Классика',
 }
 
@@ -40,7 +41,8 @@ export const useRulesetsCollection = () => {
 			from(rulesets).pipe(
 				map((ruleset) => ({
 					label: `${ruleset.duration}|${ruleset.extraTime || 0} ${
-						i18nTypeHash[ruleset.type] || ''
+						i18nTypeHash[ruleset.type] ||
+						`${ruleset.type[0].toLocaleUpperCase()}${ruleset.type.slice(1)}`
 					}`.trim(),
 					value: ruleset.id,
 					ruleset,

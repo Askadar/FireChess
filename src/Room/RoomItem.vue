@@ -18,7 +18,7 @@
 import { computed, defineComponent, PropType } from 'vue'
 import { RouterLink } from 'vue-router'
 import { RoomSchema } from '../common'
-import { i18nTypeHash, RulesetSchema } from '../common/useRulesetsCollection'
+import { i18nTypeHash, RulesetSchema } from '../common'
 
 export default defineComponent({
 	props: {

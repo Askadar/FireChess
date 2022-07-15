@@ -18,11 +18,11 @@ import {
 import { collectionData } from 'rxfire/firestore'
 import { startWith } from 'rxjs/operators'
 
-import { db } from '../firebase'
+import { db } from '../../firebase'
 
-import { cleanBoard } from './constants'
-import { useNotification } from './useNotification'
-import { useObservable } from './useObservable'
+import { cleanBoard } from '../constants'
+import { useNotification } from '../misc'
+import { useObservable } from '../rx/useObservable'
 import { RulesetSchema } from './useRulesetsCollection'
 import { useTypedCollection } from './useTypedCollection'
 

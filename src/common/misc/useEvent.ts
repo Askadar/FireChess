@@ -1,4 +1,4 @@
-import { globalEventContext } from '../externals'
+import { globalEventContext } from '../../externals'
 
 export const useEvent = <EventPayload = undefined>(props: {
 	evtName: string

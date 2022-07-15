@@ -1,4 +1,4 @@
-import { useTimer, TimerState } from '../useTimer'
+import { useTimer, TimerState } from '../timing'
 
 jest.useFakeTimers()
 

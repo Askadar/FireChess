@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 
-export enum TimerState {
+export enum ETimerState {
 	idle,
 	running,
 	finished,
@@ -14,7 +14,7 @@ export const useTimer = (props?: {
 	const { duration = 300, startOnCreation = true, resolutionMs = 10 } = props || {}
 	const _timeout = ref<number>(-1)
 	const lastEndpoint = ref<number>(0)
-	const status = ref<TimerState>(TimerState.idle)
+	const status = ref<ETimerState>(ETimerState.idle)
 	const timeLeftMs = ref(duration * 1e3)
 	const timeLeft = computed(() => Math.floor(timeLeftMs.value / 1e3))
 
@@ -30,10 +30,10 @@ export const useTimer = (props?: {
 
 	const finish = () => {
 		timeLeftMs.value = 0
-		status.value = TimerState.finished
+		status.value = ETimerState.finished
 	}
 	const advanceTime = () => {
-		if (status.value !== TimerState.running) return false
+		if (status.value !== ETimerState.running) return false
 
 		const currentTime = Date.now()
 		timeLeftMs.value -= currentTime - lastEndpoint.value
@@ -50,14 +50,14 @@ export const useTimer = (props?: {
 		) as unknown as number
 	}
 	const play = () => {
-		status.value = TimerState.running
+		status.value = ETimerState.running
 		lastEndpoint.value = Date.now()
 
 		advanceTime()
 	}
 	const pause = () => {
 		advanceTime()
-		status.value = TimerState.idle
+		status.value = ETimerState.idle
 
 		return timeLeftMs.value
 	}

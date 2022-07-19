@@ -35,11 +35,13 @@ export default defineComponent({
 		const router = useRouter()
 
 		const gameDuration = (parseInt(router.currentRoute.value.query.duration as string) || 5) * 60
+		const extraTime = parseInt(router.currentRoute.value.query.extraTime as string) || 0
 		const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
 		const { _room, gameOver, gameStatusLabel, myTimer, theirTimer } = useGame({
 			uid,
 			roomId,
 			gameDuration,
+			extraTime,
 		})
 
 		const refreshRoomTimer = () => updateRoom(roomId, { created: serverTimestamp() as Timestamp })

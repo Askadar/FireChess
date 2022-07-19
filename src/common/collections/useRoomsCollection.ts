@@ -15,7 +15,8 @@ import {
 	updateDoc,
 	where,
 } from 'firebase/firestore'
-import { collectionData } from 'rxfire/firestore'
+import { collectionData, doc as doc$ } from 'rxfire/firestore'
+import { Observable } from 'rxjs'
 import { startWith } from 'rxjs/operators'
 
 import { db } from '../../firebase'
@@ -94,6 +95,8 @@ export const useRoomsCollection = (
 		return getDoc(getRoomRef(id))
 	}
 
+	const getRoomDoc$ = (id: string): Observable<DocumentSnapshot<RoomSchema>> => doc$<RoomSchema>(getRoomRef(id))
+
 	const updateRoom = async (
 		roomOrId: string | DocumentSnapshot<RoomSchema>,
 		updateData: Partial<RoomSchema>
@@ -162,6 +165,7 @@ export const useRoomsCollection = (
 		createRoom,
 		getRoom,
 		getRoomRef,
+		getRoomDoc$,
 		updateRoom,
 		deleteRoom,
 		tickActiveRoom,

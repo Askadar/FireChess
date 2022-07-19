@@ -3,7 +3,7 @@ import { Square, UseChess } from './useChess'
 import { Timestamp, serverTimestamp } from 'firebase/firestore'
 
 import { Chessboard } from '../externals'
-import { Timing } from '../common/useRoomsCollection'
+import { Timing } from '../common'
 import { useRoomsCollection } from '../common'
 
 export type Timers = {
@@ -18,11 +18,13 @@ export const useBoard = (props: {
 	turn: Ref<'w' | 'b'>
 	gameOver: Ref<boolean>
 	fen: Ref<string>
+	extraTime: number,
 	move: UseChess['move']
 	getMoves: UseChess['getMoves']
 	timers: Timers
 }) => {
-	const { roomId, uid, playingAs, matchStart, timers, turn, gameOver, move, getMoves, fen } = props
+	const { roomId, uid, playingAs, matchStart, timers, turn, gameOver, extraTime, move, getMoves, fen } = props
+	const extraTimeMs = extraTime * 1e3
 
 	const { updateRoom } = useRoomsCollection({ uid, username: 'invalid param' })
 	const hoverColour = computed(() => {
@@ -65,8 +67,14 @@ export const useBoard = (props: {
 		if (currentMove === null) return 'snapback'
 
 		const timing: Timing = {
-			whiteTime: playingAs.value === 'w' ? timers.myTimer.timeLeftMs : timers.theirTimer.timeLeftMs,
-			blackTime: playingAs.value === 'w' ? timers.theirTimer.timeLeftMs : timers.myTimer.timeLeftMs,
+			whiteTime:
+				playingAs.value === 'w'
+					? timers.myTimer.timeLeftMs + extraTimeMs
+					: timers.theirTimer.timeLeftMs,
+			blackTime:
+				playingAs.value === 'w'
+					? timers.theirTimer.timeLeftMs
+					: timers.myTimer.timeLeftMs + extraTimeMs,
 			updated: serverTimestamp() as unknown as Timestamp,
 		}
 		updateRoom(roomId, { gameBoard: fen.value, timing })

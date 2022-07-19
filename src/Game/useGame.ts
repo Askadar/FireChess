@@ -1,6 +1,5 @@
-import { deleteField } from '@firebase/firestore'
+import { deleteField, DocumentSnapshot } from '@firebase/firestore'
 import { Subscription } from 'rxjs'
-import { docData } from 'rxfire/firestore'
 import { ref, watch, computed } from 'vue'
 
 import {
@@ -17,9 +16,15 @@ import { useBoard } from './useBoard'
 import { useChess } from './useChess'
 import { useGameTimer } from './useGameTimer'
 import { useExternalState } from './useExternalState'
+import { shareReplay } from 'rxjs/operators'
 
-export const useGame = (props: { uid: string; roomId: string, gameDuration: number }) => {
-	const { uid, roomId, gameDuration } = props
+export const useGame = (props: {
+	uid: string
+	roomId: string
+	gameDuration: number
+	extraTime: number
+}) => {
+	const { uid, roomId, gameDuration, extraTime } = props
 
 	// TODO extract into rule settings
 	const gameTime = 20
@@ -35,17 +40,16 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 	const completeGameOverState = computed(() => externalState.gameOver || gameOver.value)
 
 	const room = ref<RoomSchema>()
-	const { getRoomRef, updateRoom } = useRoomsCollection({ uid, username: 'null' })
+	const { updateRoom, getRoomDoc$ } = useRoomsCollection({ uid, username: 'null' })
 
-	const { resetGame, updateGame, gameResult, gameStatusLabel, move, fen, getMoves, turn } =
-		useChess({
-			matchStart,
-			whiteName,
-			blackName,
-			gameOver,
-			externalState,
-			room,
-		})
+	const { resetGame, updateGame, gameStatusLabel, move, fen, getMoves, turn } = useChess({
+		matchStart,
+		whiteName,
+		blackName,
+		gameOver,
+		externalState,
+		room,
+	})
 
 	const {
 		myTimer,
@@ -53,7 +57,7 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 		play: startGameTimer,
 		turnMade,
 		compensateTimer,
-	} = useGameTimer({ gameDuration })
+	} = useGameTimer({ gameDuration, extraTime })
 
 	const { changeBoardOrientation, resetBoard, updateBoard } = useBoard({
 		uid,
@@ -66,6 +70,7 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 		turn,
 		move,
 		getMoves,
+		extraTime,
 	})
 
 	const onTimeout = (event: CustomEvent<{ myTime: number; theirTime: number }>) => {
@@ -85,13 +90,12 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 	const { dispatch } = useEvent({ evtName: 'timeout', handleEvent: onTimeout })
 
 	watch([myTimer, theirTimer], ([mTimer, tTimer]) => {
+		console.log({ diff: Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs), reqDiff: gameTime * 1e3 })
 		if (
-			Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs) <= gameTime * 1e3 ||
-			(mTimer.timeLeftMs > 0 && theirTimer.timeLeftMs > 0)
+			Math.abs(mTimer.timeLeftMs - tTimer.timeLeftMs) >= gameTime * 1e3 ||
+			(mTimer.timeLeftMs <= 0 && theirTimer.timeLeftMs <= 0)
 		)
-			return
-
-		dispatch({ myTime: mTimer.timeLeftMs, theirTime: tTimer.timeLeftMs })
+			dispatch({ myTime: mTimer.timeLeftMs, theirTime: tTimer.timeLeftMs })
 	})
 
 	const restartGame = async () => {
@@ -114,7 +118,10 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 	}
 
 	let roomMetaSub: Subscription
-	const onRoomMetaUpdate = (roomMeta: RoomSchema) => {
+	const onRoomMetaUpdate = (roomDoc: DocumentSnapshot<RoomSchema>) => {
+		const roomMeta = roomDoc.data()
+		if (!roomDoc.exists || !roomMeta) return false
+
 		if (!matchStart.value) {
 			whiteName.value = roomMeta.white?.name || ''
 			blackName.value = roomMeta.black?.name || ''
@@ -127,13 +134,16 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 			startGameTimer(prevTurn.value === playingAs.value)
 		}
 
-		// if (roomMeta.timing)
-		// 	compensateTimer({ remoteDelayCompensation: roomMeta.timing, playingAs: playingAs.value })
+		if (roomMeta.timing)
+			compensateTimer({ remoteDelayCompensation: roomMeta.timing, playingAs: playingAs.value })
 
 		if (matchStart.value) roomMetaSub?.unsubscribe()
 	}
 
-	const onRoomDataUpdate = (roomData: RoomSchema) => {
+	const onRoomDataUpdate = (roomDoc: DocumentSnapshot<RoomSchema>) => {
+		const roomData = roomDoc.data()
+		if (roomDoc.metadata.hasPendingWrites || !roomDoc.exists || !roomData) return false
+
 		const { gameBoard } = roomData
 		if (!gameBoard) return
 
@@ -155,8 +165,9 @@ export const useGame = (props: { uid: string; roomId: string, gameDuration: numb
 		prevTurn.value = turn.value
 	}
 
-	useMountedSubscription(docData<RoomSchema>(getRoomRef(roomId)), onRoomDataUpdate)
-	roomMetaSub = useMountedSubscription(docData<RoomSchema>(getRoomRef(roomId)), onRoomMetaUpdate)
+	const $roomDocs = getRoomDoc$(roomId).pipe(shareReplay(1))
+	useMountedSubscription($roomDocs, onRoomDataUpdate)
+	roomMetaSub = useMountedSubscription($roomDocs, onRoomMetaUpdate)
 
 	return {
 		_room: room,

@@ -5,6 +5,8 @@ import { RoomSchema } from '../common'
 import { colourToLong, getByLongColour, getOtherLongColour, getPlayerColour } from '../helpers'
 
 import { ExternalState } from './useExternalState'
+
+export type { Square } from 'chess.js'
 export interface UseChess {
 	move(moveDef: ShortMove): Move | null
 	getMoves(square: string): Move[]

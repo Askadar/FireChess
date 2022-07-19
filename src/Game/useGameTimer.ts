@@ -1,8 +1,13 @@
 import { computed, onUnmounted, reactive } from 'vue'
-import { useTimer, TimerState } from '../common'
-import { Timing } from '../common/useRoomsCollection'
+import { useTimer, ETimerState, Timing } from '../common'
 
-export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
+export const useGameTimer = ({
+	gameDuration,
+	extraTime,
+}: {
+	gameDuration: number
+	extraTime: number
+}) => {
 	const resolutionMs = 250
 
 	const myTimer = reactive(
@@ -17,13 +22,13 @@ export const useGameTimer = ({ gameDuration }: { gameDuration: number }) => {
 	})
 
 	const currentlyPlaying = computed(() => {
-		if (myTimer.status === TimerState.running) return myTimer
-		else if (theirTimer.status === TimerState.running) return theirTimer
+		if (myTimer.status === ETimerState.running) return myTimer
+		else if (theirTimer.status === ETimerState.running) return theirTimer
 	})
 
 	const currentlyPaused = computed(() => {
-		if (myTimer.status === TimerState.idle) return myTimer
-		else if (theirTimer.status === TimerState.idle) return theirTimer
+		if (myTimer.status === ETimerState.idle) return myTimer
+		else if (theirTimer.status === ETimerState.idle) return theirTimer
 	})
 
 	const play = (forMe = true) => {
